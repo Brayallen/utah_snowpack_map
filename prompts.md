@@ -592,3 +592,163 @@ commit. Update this log and test desktop/mobile behavior.
 **Result:**
 Stage 2 interactive map and browser checks completed. Stages 3-6 were not built.
 No commit was created; Stage 2 awaits user review and approval.
+
+## Prompt 21 - Build Stage 3 NRCS Data and Station Views
+
+**Prompt:**
+Read spec.md and build only Stage 3: retrieve active Utah SNOTEL metadata and
+observations from the NRCS AWDB REST API, show real coordinates and SWE,
+calculate percent of median and statewide averages, populate station details,
+add the water-year SWE graph, apply current/historical and unavailable-data rules,
+show loading/error/retry states, preserve the responsive and keyboard layout,
+test today's date and April 1, 2025, and do not build Stages 4-6 or commit.
+
+**Agent Response / Decisions:**
+- Replaced mock station data with live AWDB metadata and WTEQ observations.
+- Loaded 141 active Utah SNOTEL stations with SWE monitoring capability.
+- Added chunked exact-date and recent-range AWDB requests, unrounded percent
+  calculations, statewide unweighted averaging, valid/eligible coverage, and
+  per-station unavailable reasons.
+- Added real station details and source links, plus an SVG water-year graph using
+  NRCS observations and median values with gaps for missing observations.
+- Added loading, NRCS failure, and retry banner behavior; retained the existing
+  Leaflet map and responsive/keyboard layout.
+- Did not add either custom feature or implement additional build stages.
+
+**Test Outcomes:**
+- Confirmed browser CORS and AWDB `access-control-allow-origin: *`.
+- Current mode 2026-11-24: 0 valid / 141 eligible. The exact-date request returned
+  no observations, and the recent-range response was quality-unapproved or stale.
+- Historical mode 2025-04-01: 65 valid / 141 eligible with an unweighted statewide
+  average of 95%.
+- Brighton: SWE 21.4 inches, median 21.6 inches, displayed percent 99%.
+- Snowbird: SWE 38.6 inches, median 36.5 inches, displayed percent 106%.
+- Ben Lomond Peak: SWE 33.4 inches, median 33.4 inches, displayed percent 100%.
+- Browser-tested the graph and desktop/mobile layouts; no horizontal overflow was
+  found at 390px and 1440px widths.
+- AWDB daily data does not provide an exact observation-time timestamp, only a
+  date. The app therefore labels the timestamp as not provided and uses the
+  observation date for the displayed 24-hour age/stale check.
+
+**API and Validation Issues:**
+- The exact April 1 and recent-range bulk requests worked, but service limits
+  and response size required 35-station batches.
+- Today's exact-date request returned no station values, so current-mode
+  statewide availability was correctly unavailable rather than fabricated.
+- Independent NRCS Snow Survey report comparison remains pending.
+- Required Stage 4 validation should not be considered complete until the
+  three-station app values and edge cases pass formal tests.
+
+**Files Changed:**
+- `index.html`: replaced Stage 2 sample station behavior with Stage 3 AWDB
+  metadata, observations, calculations, details, graph, loading, error, and
+  retry behavior.
+- `prompts.md`: appended this Prompt 21 entry.
+
+**Result:**
+Stage 3 implementation and live-data checks were performed. No custom features,
+Stage 4 validation, or later stages were added, and no commit was created.
+
+## Prompt 22 - Investigate Hourly AWDB Current Data
+
+**Prompt:**
+Investigate why today's view has zero valid stations and whether AWDB offers
+hourly SWE suitable for current mode. Preserve historical exact-date daily data,
+the 24-hour freshness rule when accurate timestamps exist, explicit provisional
+or unavailable status, and real measurements only. Do not change code, start
+Stage 4, or commit. Explain findings and recommendation; log this request.
+
+**Agent Response / Decisions:**
+- Queried the official AWDB metadata endpoint with Utah SNOTEL, WTEQ, HOURLY,
+  activeOnly, and station-element parameters: all 141 active stations advertise
+  hourly WTEQ capability.
+- Queried hourly WTEQ for the three validation stations. The response includes
+  timestamp strings such as `2026-11-24 08:00`, real SWE values, `qcFlag`, and
+  `qaFlag`. Metadata's `dataTimeZone` is -8.0 and the OpenAPI schema describes
+  this as the station data time-zone offset from GMT.
+- The latest hourly values for Brighton, Snowbird, and Ben Lomond Peak were
+  `qcFlag=V`, `qaFlag=R`; earlier hourly points also included QA `P`.
+- Current daily exact-date request for 2026-11-24 returned zero rows. The
+  previous daily date had records, but the latest statuses were not `V/A`.
+- The existing strict filter requiring `qcFlag=V` and `qaFlag=A` is consistent
+  with spec.md; those flags explain zero valid current observations rather than
+  an incorrect division or API parsing issue. Daily reporting also lags the
+  current Utah date.
+- The daily-only age calculation cannot accurately enforce 24 hours because it
+  uses date-only values. Current mode should use hourly timestamps and the
+  AWDB timezone metadata; historical mode should retain exact-date DAILY data.
+- Hourly responses did not include a 1991-2020 median value. Daily historical
+  responses for matching November 24 dates in 2023, 2024, and 2025 did include
+  matching AWDB median fields for the three test stations; the daily current-date
+  request did not.
+- Recommended current mode request HOURLY WTEQ for a bounded recent interval,
+  compute age from the returned timestamp and documented AWDB offset, show
+  timestamped values younger than 24 hours, and label non-A QA flags explicitly
+  as not approved/provisional rather than silently presenting them as confirmed.
+- To preserve the approved `qaFlag=A` calculation and statewide inclusion rules,
+  provisional hourly SWE should be displayed separately and excluded from
+  percent-of-median markers and statewide averages until AWDB marks it accepted.
+  Retrieve the official same-calendar-day daily median reference separately;
+  never use the hourly observation date/value as a substitute historical daily
+  record. If the daily median cannot be obtained, display the median and
+  percent-of-median as unavailable.
+- No code, spec.md, Stage 4 tests, or commits were changed or started.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 22 entry.
+
+**Result:**
+Hourly AWDB availability and current-data filtering were investigated. The
+recommendation is ready for user review; implementation remains unchanged.
+
+## Prompt 23 - Correct Current Mode to Use Hourly AWDB SWE
+
+**Prompt:**
+Implement the approved Stage 3 current-data correction. Current mode must use
+recent hourly AWDB WTEQ, station `dataTimeZone` and timestamps for the 24-hour
+freshness check, show actual Raw/Provisional readings as unapproved while
+excluding them from percentage and statewide calculations, and obtain the
+1991-2020 median from an AWDB daily median request. Historical mode must remain
+exact-date daily with existing quality rules. Preserve the map and historical
+graphs; update spec.md and prompts.md, test November 24, 2026 and April 1, 2025,
+confirm historical values, and do not start Stage 4, add features, or commit.
+
+**Agent Response / Decisions:**
+- Updated the relevant requirements in spec.md for current hourly readings,
+  timestamp/time-zone freshness, Raw/Provisional/Approved flag handling, and
+  daily same-calendar-day median lookup that never substitutes a prior-year SWE
+  value. Historical mode remains exact-date DAILY data with `qcFlag=V` and
+  `qaFlag=A`.
+- Updated index.html to request current HOURLY WTEQ and the matching daily
+  median, calculate age using AWDB's station time-zone offset, display the
+  latest actual hourly SWE and timestamp, and exclude unapproved, stale,
+  invalid-quality, missing-median, and zero-median readings from percentage
+  calculations.
+- November 24, 2026 browser test: 140 numeric hourly readings out of 141
+  eligible stations; 139 were Raw (`R`) and 1 was Provisional (`P`); all 140
+  were within 24 hours; one station had no hourly reading. Zero stations
+  qualified for the statewide average, which correctly displayed unavailable.
+- Brighton current detail showed an actual 3.1-inch Raw reading, 3.3-inch
+  daily median reference, timestamp `2026-11-24 08:00` at AWDB UTC-08:00, and
+  unavailable percent-of-median.
+- April 1, 2025 historical values remained unchanged: Brighton 21.4/21.6
+  inches, 99%; Snowbird 38.6/36.5 inches, 106%; Ben Lomond Peak 33.4/33.4
+  inches, 100%. The historical statewide summary remained 65/141 valid and
+  95%.
+- Browser checks at 390px and 1440px found no horizontal overflow. No browser
+  page errors were reported.
+- These are Stage 3 behavior checks, not Stage 4 validation. Independent NRCS
+  Snow Survey report comparison remains pending; no claim is made that the app
+  has passed formal validation.
+
+**Files Changed:**
+- `spec.md`: documented the approved current hourly and historical daily
+  behavior.
+- `index.html`: implemented current hourly retrieval and display, median lookup,
+  freshness handling, and approved-quality filtering.
+- `prompts.md`: appended this Prompt 23 entry and its test outcome.
+
+**Result:**
+The Stage 3 current-data correction was tested for both requested dates, and
+historical reference values remained unchanged. Stage 4 and optional features
+were not started, and no commit was created.

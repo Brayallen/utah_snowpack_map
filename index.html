@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f3f7f8">
-  <title>Utah Snowpack Map — Interactive Map Sample</title>
+  <title>Utah Snowpack Map — NRCS Data</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <style>
     :root {
@@ -581,6 +581,69 @@
       text-align: center;
     }
 
+    .status-banner {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 0 0 18px;
+      border: 1px solid #dec58a;
+      border-radius: 11px;
+      background: #fff8e6;
+      color: #704d0b;
+      padding: 11px 13px;
+      font-size: 0.82rem;
+    }
+
+    .status-banner.visible {
+      display: flex;
+    }
+
+    .status-banner.error {
+      border-color: #dfaaa8;
+      background: #fff4f3;
+      color: #7a2f2d;
+    }
+
+    .retry-button {
+      flex: 0 0 auto;
+      min-height: 38px;
+      border: 1px solid currentColor;
+      border-radius: 8px;
+      background: #fff;
+      color: inherit;
+      cursor: pointer;
+      padding: 7px 11px;
+      font-weight: 750;
+    }
+
+    .loading-row {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .loading-row.visible {
+      display: flex;
+    }
+
+    .loading-row::before {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #b9cccf;
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      content: "";
+      animation: spin 700ms linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     @media (max-width: 900px) {
       .workspace {
         grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
@@ -692,8 +755,13 @@
         <h1>Utah Snowpack Map</h1>
         <p class="subtitle">A station-by-station view of snow water equivalent compared with the 1991–2020 median.</p>
       </div>
-      <span class="mockup-tag">Stage 2 · Sample station map</span>
+      <span class="mockup-tag">Stage 3 · Live NRCS data</span>
     </header>
+
+    <div id="status-banner" class="status-banner" role="alert" aria-live="assertive">
+      <span id="status-banner-text"></span>
+      <button id="retry-button" class="retry-button" type="button">Retry NRCS request</button>
+    </div>
 
     <section class="overview" aria-label="Date and statewide summary">
       <div class="date-card">
@@ -702,22 +770,22 @@
         <p class="field-help" id="date-help">Date shown in America/Denver. Future dates are not available.</p>
       </div>
 
-      <div class="summary-grid" aria-label="Sample statewide summary">
+      <div class="summary-grid" aria-label="Statewide summary">
         <article class="summary-card">
           <div class="summary-heading">
             <p class="summary-label">Average of valid station percentages (unweighted)</p>
-            <span class="sample-tag">Sample</span>
+            <span id="summary-mode" class="sample-tag">Loading</span>
           </div>
-          <p class="summary-value">103%</p>
-          <p class="summary-note">PLACEHOLDER — not a measured statewide result</p>
+          <p id="statewide-average" class="summary-value">Loading…</p>
+          <p id="summary-note" class="summary-note">NRCS 1991–2020 median reference</p>
         </article>
         <article class="summary-card">
           <div class="summary-heading">
             <p class="summary-label">Valid stations / eligible stations</p>
-            <span class="sample-tag">Sample</span>
+            <span class="sample-tag">NRCS</span>
           </div>
-          <p class="summary-value">118 / 140</p>
-          <p class="summary-note">PLACEHOLDER — counts are illustrative only</p>
+          <p id="station-count" class="summary-value">Loading…</p>
+          <p class="summary-note">Eligible stations with SWE monitoring capability</p>
         </article>
       </div>
     </section>
@@ -727,25 +795,26 @@
         <div class="panel-header">
           <div>
             <h2 id="map-heading">Utah SNOTEL stations</h2>
-            <p>Illustrative sample locations · not live SNOTEL data</p>
+            <p id="map-status-text">Loading active Utah SNOTEL stations…</p>
           </div>
-          <span class="sample-tag">Sample data</span>
+          <span id="map-source-tag" class="sample-tag">NRCS AWDB</span>
         </div>
         <div class="panel-body">
           <div class="map-viewport">
-            <div id="utah-map" role="region" aria-label="Interactive Utah map with sample SNOTEL markers"></div>
+            <div id="utah-map" role="region" aria-label="Interactive Utah map with NRCS SNOTEL markers"></div>
           </div>
-          <p class="map-note"><strong>Sample data only:</strong> map markers and coordinates are illustrative. No NRCS requests or real SWE calculations are used.</p>
+          <p class="map-note"><strong>Official source:</strong> station metadata and WTEQ observations are retrieved from the NRCS AWDB REST API.</p>
+          <div id="loading-row" class="loading-row" aria-live="polite">Loading NRCS station data…</div>
 
           <div class="station-list" aria-labelledby="station-list-heading">
-            <h3 id="station-list-heading">Sample station list</h3>
+            <h3 id="station-list-heading">Utah SNOTEL station list</h3>
             <p class="station-list-help">Keyboard-accessible alternative to selecting map markers.</p>
             <ul id="station-options" class="station-options"></ul>
-            <p id="selection-status" class="selection-status" role="status" aria-live="polite">No sample station selected.</p>
+            <p id="selection-status" class="selection-status" role="status" aria-live="polite">No station selected.</p>
           </div>
 
-          <div class="legend" aria-label="Placeholder marker color legend">
-            <p class="legend-title">Marker color legend <span class="sample-tag">Sample data</span></p>
+          <div class="legend" aria-label="Marker color legend">
+            <p class="legend-title">Marker color legend <span class="sample-tag">NRCS</span></p>
             <div class="legend-item"><span class="swatch" style="background:var(--red)" aria-hidden="true"></span><span>0–49% of median</span></div>
             <div class="legend-item"><span class="swatch" style="background:var(--orange)" aria-hidden="true"></span><span>50–79% of median</span></div>
             <div class="legend-item"><span class="swatch" style="background:var(--green)" aria-hidden="true"></span><span>80–119% of median</span></div>
@@ -756,35 +825,37 @@
         </div>
       </section>
 
-      <aside class="details-stack" aria-label="Station details and SWE graph placeholders">
+      <aside class="details-stack" aria-label="Station details and SWE graph">
         <section class="panel" aria-labelledby="station-heading">
           <div class="panel-header">
             <div>
               <h2 id="station-heading">Station details</h2>
-              <p>Sample details update when a marker or station-list button is selected</p>
+              <p>Updated when a station marker or station-list button is selected</p>
             </div>
-            <span class="sample-tag">Sample data</span>
+            <span class="sample-tag">Live NRCS</span>
           </div>
           <div class="panel-body">
             <div id="station-empty-state" class="empty-state">
               <div class="empty-icon" aria-hidden="true">i</div>
               <h3>No station selected</h3>
-              <p>Select a sample marker or use the keyboard-accessible station list. No live measurements are shown.</p>
+              <p>Select a station marker or use the keyboard-accessible station list.</p>
             </div>
-            <div id="sample-station" class="sample-station" aria-label="Illustrative sample station values" hidden>
+            <div id="sample-station" class="sample-station" aria-label="Selected station values" hidden>
               <div class="sample-station-heading">
-                <h3 id="station-name">SAMPLE STATION</h3>
-                <span class="sample-tag">Mock data only</span>
+                <h3 id="station-name">Station name</h3>
+                <span class="sample-tag">AWDB</span>
               </div>
               <div class="data-grid">
-                <div class="data-field"><span>Station identifier</span><strong id="station-id">SAMPLE ONLY</strong></div>
-                <div class="data-field"><span>Elevation</span><strong id="station-elevation">SAMPLE ft</strong></div>
-                <div class="data-field"><span>Observation date</span><strong id="station-date">SAMPLE DATE</strong></div>
-                <div class="data-field"><span>SWE</span><strong id="station-swe">SAMPLE in</strong></div>
-                <div class="data-field"><span>1991–2020 median SWE</span><strong id="station-median">SAMPLE in</strong></div>
-                <div class="data-field"><span>Percent of median</span><strong id="station-percent">SAMPLE %</strong></div>
-                <div class="data-field"><span>Sample status</span><strong id="station-availability">SAMPLE STATUS</strong></div>
-                <div class="data-field"><span>Source</span><strong>MOCK DATA · NOT NRCS</strong></div>
+                <div class="data-field"><span>Station identifier</span><strong id="station-id">Loading</strong></div>
+                <div class="data-field"><span>Elevation</span><strong id="station-elevation">Loading</strong></div>
+                <div class="data-field"><span>Observation date</span><strong id="station-date">Loading</strong></div>
+                <div class="data-field"><span>Observation timestamp / age</span><strong id="station-timestamp">Loading</strong></div>
+                <div class="data-field"><span>SWE</span><strong id="station-swe">Loading</strong></div>
+                <div class="data-field"><span>1991–2020 median SWE</span><strong id="station-median">Loading</strong></div>
+                <div class="data-field"><span>Median lookup</span><strong id="station-median-source">Loading</strong></div>
+                <div class="data-field"><span>Percent of median</span><strong id="station-percent">Loading</strong></div>
+                <div class="data-field"><span>Data status</span><strong id="station-availability">Loading</strong></div>
+                <div class="data-field"><span>Source</span><strong><a id="station-source" href="https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs" target="_blank" rel="noopener noreferrer">NRCS AWDB REST API</a></strong></div>
               </div>
             </div>
           </div>
@@ -796,13 +867,13 @@
               <h2 id="graph-heading">Water-year SWE</h2>
               <p>SWE (inches) · October 1 through selected date</p>
             </div>
-            <span class="sample-tag">Placeholder</span>
+            <span class="sample-tag">NRCS</span>
           </div>
           <div class="panel-body">
             <div class="graph-wrap">
-              <svg class="graph-svg" viewBox="0 0 480 260" role="img" aria-labelledby="graph-title graph-desc">
-                <title id="graph-title">Placeholder water-year SWE graph</title>
-                <desc id="graph-desc">Illustrative dashed lines and axes only. There are no measured SWE values or calculated median values.</desc>
+              <svg id="swe-chart" class="graph-svg" viewBox="0 0 480 260" role="img" aria-labelledby="graph-title graph-desc">
+                <title id="graph-title">Water-year SWE graph</title>
+                <desc id="graph-desc">Measured water-year SWE and 1991–2020 median SWE in inches.</desc>
                 <text class="graph-title" x="48" y="18">SWE (inches)</text>
                 <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
                 <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
@@ -823,17 +894,17 @@
                 <path class="graph-line-two" d="M62 181 C105 169 118 159 151 151 S210 130 246 119 S298 97 342 89 S405 69 451 74"></path>
               </svg>
               <p class="graph-caption">
-                <span class="line-key"><span class="line-swatch" aria-hidden="true"></span>Selected water year · placeholder</span>
-                <span class="line-key"><span class="line-swatch median" aria-hidden="true"></span>1991–2020 median · placeholder</span>
+                <span class="line-key"><span class="line-swatch" aria-hidden="true"></span>Selected water-year SWE</span>
+                <span class="line-key"><span class="line-swatch median" aria-hidden="true"></span>1991–2020 median SWE</span>
               </p>
             </div>
-            <p class="map-note"><strong>Graph placeholder:</strong> axes and sample lines show intended layout only. They are not measurements and do not represent calculated SWE.</p>
+            <p id="graph-status" class="map-note"><strong>Graph status:</strong> select a station to load NRCS observations.</p>
           </div>
         </section>
       </aside>
     </section>
 
-    <p class="footnote">Stage 2 interactive map · All station positions and values are SAMPLE mock data. The SWE graph remains a placeholder.</p>
+    <p class="footnote">Stage 3 · Utah SNOTEL metadata and WTEQ observations retrieved from the official NRCS AWDB REST API.</p>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
@@ -847,15 +918,6 @@
     dateInput.value = utahDate;
     dateInput.max = utahDate;
 
-    const sampleStations = [
-      { id: "SAMPLE-UT-01", name: "Mock SNOTEL North Ridge", lat: 41.48, lng: -111.78, elevation: 8_620, date: "SAMPLE · 2025-04-01", swe: 7.8, median: 20.0, percent: 39, status: "SAMPLE · available" },
-      { id: "SAMPLE-UT-02", name: "Mock SNOTEL Wasatch East", lat: 40.58, lng: -111.58, elevation: 9_140, date: "SAMPLE · 2025-04-01", swe: 13.0, median: 20.0, percent: 65, status: "SAMPLE · available" },
-      { id: "SAMPLE-UT-03", name: "Mock SNOTEL Central", lat: 39.40, lng: -111.63, elevation: 8_210, date: "SAMPLE · 2025-04-01", swe: 19.2, median: 20.0, percent: 96, status: "SAMPLE · available" },
-      { id: "SAMPLE-UT-04", name: "Mock SNOTEL High Basin", lat: 38.42, lng: -111.95, elevation: 9_480, date: "SAMPLE · 2025-04-01", swe: 26.8, median: 20.0, percent: 134, status: "SAMPLE · available" },
-      { id: "SAMPLE-UT-05", name: "Mock SNOTEL South Summit", lat: 37.88, lng: -111.42, elevation: 9_020, date: "SAMPLE · 2025-04-01", swe: 35.6, median: 20.0, percent: 178, status: "SAMPLE · available" },
-      { id: "SAMPLE-UT-06", name: "Mock SNOTEL West Pass", lat: 39.05, lng: -113.02, elevation: 7_760, percent: null, status: "SAMPLE · unavailable: missing observation" }
-    ];
-
     const markerColors = {
       veryLow: "#b94a48",
       below: "#d88735",
@@ -864,15 +926,6 @@
       veryHigh: "#315a8c",
       unavailable: "#7c898e"
     };
-
-    function markerColor(station) {
-      if (station.percent === null) return markerColors.unavailable;
-      if (station.percent < 50) return markerColors.veryLow;
-      if (station.percent < 80) return markerColors.below;
-      if (station.percent < 120) return markerColors.near;
-      if (station.percent < 150) return markerColors.above;
-      return markerColors.veryHigh;
-    }
 
     const map = L.map("utah-map", {
       scrollWheelZoom: false,
@@ -884,79 +937,470 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
+    const markerLayer = L.layerGroup().addTo(map);
     const stationButtons = new Map();
     const stationMarkers = new Map();
     const stationOptions = document.querySelector("#station-options");
     const stationStatus = document.querySelector("#selection-status");
     const stationEmptyState = document.querySelector("#station-empty-state");
     const stationDetails = document.querySelector("#sample-station");
+    const statusBanner = document.querySelector("#status-banner");
+    const statusBannerText = document.querySelector("#status-banner-text");
+    const retryButton = document.querySelector("#retry-button");
+    const loadingRow = document.querySelector("#loading-row");
+    const AWDB_BASE = "https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1";
 
-    function selectStation(station) {
+    let stations = [];
+    let selectedStationId = null;
+    let lastSuccessfulResult = null;
+    let loadSequence = 0;
+
+    function markerColor(percent) {
+      if (percent === null || !Number.isFinite(percent)) return markerColors.unavailable;
+      if (percent < 50) return markerColors.veryLow;
+      if (percent < 80) return markerColors.below;
+      if (percent < 120) return markerColors.near;
+      if (percent < 150) return markerColors.above;
+      return markerColors.veryHigh;
+    }
+
+    function setLoading(isLoading) {
+      loadingRow.classList.toggle("visible", isLoading);
+      document.querySelector("#map-status-text").textContent = isLoading
+        ? "Loading NRCS station data…"
+        : "NRCS station data loaded";
+    }
+
+    function showStatus(message, isError = false) {
+      statusBannerText.textContent = message;
+      statusBanner.classList.toggle("error", isError);
+      statusBanner.classList.add("visible");
+    }
+
+    function clearStatus() {
+      statusBanner.classList.remove("visible", "error");
+      statusBannerText.textContent = "";
+    }
+
+    function waterYearStart(dateText) {
+      const date = new Date(`${dateText}T12:00:00`);
+      return `${date.getFullYear() - (date.getMonth() < 9 ? 1 : 0)}-10-01`;
+    }
+
+    function utcOffsetString(offsetHours) {
+      const offsetMinutes = Math.round(Number(offsetHours || 0) * 60);
+      const sign = offsetMinutes < 0 ? "-" : "+";
+      const absoluteMinutes = Math.abs(offsetMinutes);
+      const hours = String(Math.floor(absoluteMinutes / 60)).padStart(2, "0");
+      const minutes = String(absoluteMinutes % 60).padStart(2, "0");
+      return `${sign}${hours}:${minutes}`;
+    }
+
+    function parseAwdbTimestamp(timestamp, offsetHours) {
+      if (!timestamp) return null;
+      const normalized = timestamp.replace(" ", "T");
+      const instant = new Date(`${normalized}:00${utcOffsetString(offsetHours)}`);
+      return Number.isNaN(instant.getTime()) ? null : instant;
+    }
+
+    function timestampLabel(station, timestamp) {
+      if (!timestamp) return "Not provided";
+      return `${timestamp} (AWDB UTC${utcOffsetString(station.dataTimeZone)})`;
+    }
+
+    async function fetchJson(url) {
+      const response = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!response.ok) throw new Error(`NRCS AWDB returned HTTP ${response.status}`);
+      return response.json();
+    }
+
+    function chunk(items, size) {
+      const chunks = [];
+      for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, size + i));
+      return chunks;
+    }
+
+    function findElementValues(dataResponse, stationTriplet) {
+      const row = dataResponse.find((item) => item.stationTriplet === stationTriplet);
+      if (!row) return [];
+      for (const stationData of row.data || []) {
+        if (stationData.stationElement?.elementCode === "WTEQ") return stationData.values || [];
+      }
+      return [];
+    }
+
+    function processCurrentStation(values, station, median, medianReferenceDate) {
+      const latest = values
+        .filter((value) => value?.date && value.value !== null && value.value !== undefined && Number.isFinite(Number(value.value)))
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .at(-1);
+      if (!latest) return { ...station, percent: null, status: "No hourly SWE value available", observationDate: null, observationTimestamp: null, ageHours: null, qcFlag: null, qaFlag: null, median, medianReferenceDate, swe: null };
+
+      const observation = parseAwdbTimestamp(latest.date, station.dataTimeZone);
+      const ageHours = observation ? (Date.now() - observation.getTime()) / 3600000 : null;
+      const swe = Number(latest.value);
+      const common = {
+        ...station,
+        observationDate: latest.date.slice(0, 10),
+        observationTimestamp: latest.date,
+        ageHours,
+        qcFlag: latest.qcFlag ?? null,
+        qaFlag: latest.qaFlag ?? null,
+        median,
+        medianReferenceDate,
+        swe
+      };
+
+      if (ageHours === null) return { ...common, percent: null, status: "Observation timestamp unavailable" };
+      if (ageHours < 0) return { ...common, percent: null, status: "Observation timestamp is in the future" };
+      if (ageHours > 24) {
+        const qaStatus = latest.qaFlag === "R" ? "Raw" : latest.qaFlag === "P" ? "Provisional" : latest.qaFlag === "A" ? "Approved" : "Unapproved";
+        return { ...common, percent: null, status: `Stale observation (${Math.floor(ageHours)} hours old); QA ${qaStatus} (${latest.qaFlag ?? "missing"}); SWE shown as last reading` };
+      }
+      if (latest.qaFlag !== "A") {
+        const qaStatus = latest.qaFlag === "R" ? "Raw" : latest.qaFlag === "P" ? "Provisional" : "Unapproved";
+        return { ...common, percent: null, status: `${qaStatus} QA flag (${latest.qaFlag ?? "missing"}); qcFlag=${latest.qcFlag ?? "missing"}; SWE shown separately, excluded from calculations` };
+      }
+      if (latest.qcFlag !== "V") return { ...common, percent: null, status: `Approved QA flag; invalid QC flag (${latest.qcFlag ?? "missing"}); SWE excluded from calculations` };
+      if (median === null || !Number.isFinite(median)) return { ...common, percent: null, status: "Current SWE approved; daily median unavailable" };
+      if (median === 0) return { ...common, percent: null, status: "Median SWE is zero; percent of median is unavailable" };
+      return { ...common, percent: (swe / median) * 100, status: "Approved current observation" };
+    }
+
+    function processHistoricalStation(values, station, selectedDate) {
+      const exact = values.find((value) => value.date === selectedDate);
+      if (!exact) return { ...station, percent: null, status: "Missing observation for exact selected date", observationDate: selectedDate, qcFlag: null, qaFlag: null, median: null, swe: null };
+      if (exact.qcFlag !== "V" || exact.qaFlag !== "A") {
+        return { ...station, percent: null, status: `Invalid quality flags: qcFlag=${exact.qcFlag ?? "missing"}, qaFlag=${exact.qaFlag ?? "missing"}`, observationDate: exact.date, qcFlag: exact.qcFlag, qaFlag: exact.qaFlag, median: exact.median ?? null, swe: exact.value ?? null };
+      }
+      const swe = exact.value === null || exact.value === undefined ? null : Number(exact.value);
+      const median = exact.median === null || exact.median === undefined ? null : Number(exact.median);
+      if (swe === null || !Number.isFinite(swe)) return { ...station, percent: null, status: "Missing SWE observation", observationDate: exact.date, qcFlag: exact.qcFlag, qaFlag: exact.qaFlag, median, swe: null };
+      if (median === null || !Number.isFinite(median)) return { ...station, percent: null, status: "Median SWE unavailable", observationDate: exact.date, qcFlag: exact.qcFlag, qaFlag: exact.qaFlag, median: null, swe };
+      if (median === 0) return { ...station, percent: null, status: "Median SWE is zero; percent of median is unavailable", observationDate: exact.date, qcFlag: exact.qcFlag, qaFlag: exact.qaFlag, median: 0, swe };
+      return { ...station, percent: (swe / median) * 100, status: "Valid observation", observationDate: exact.date, observationTimestamp: null, ageHours: null, qcFlag: exact.qcFlag, qaFlag: exact.qaFlag, median, swe };
+    }
+
+    function previousMatchingCalendarDate(dateText) {
+      const [yearText, month, day] = dateText.split("-");
+      const selectedYear = Number(yearText);
+      for (let candidateYear = selectedYear - 1; candidateYear >= selectedYear - 30; candidateYear -= 1) {
+        const candidate = `${candidateYear}-${month}-${day}`;
+        const parsed = new Date(`${candidate}T12:00:00Z`);
+        if (parsed.getUTCFullYear() === candidateYear && `${String(parsed.getUTCMonth() + 1).padStart(2, "0")}-${String(parsed.getUTCDate()).padStart(2, "0")}` === `${month}-${day}`) {
+          return candidate;
+        }
+      }
+      return null;
+    }
+
+    async function requestStationData(triplets, duration, beginDate, endDate, includeMedian) {
+      const responses = [];
+      for (const batch of chunk(triplets, 35)) {
+        const url = new URL(`${AWDB_BASE}/data`);
+        url.searchParams.set("stationTriplets", batch.join(","));
+        url.searchParams.set("elements", "WTEQ");
+        url.searchParams.set("duration", duration);
+        url.searchParams.set("beginDate", beginDate);
+        url.searchParams.set("endDate", endDate);
+        url.searchParams.set("returnFlags", "true");
+        url.searchParams.set("periodRef", "END");
+        if (includeMedian) url.searchParams.set("centralTendencyType", "MEDIAN");
+        responses.push(...await fetchJson(url.toString()));
+      }
+      return responses;
+    }
+
+    function medianValuesFromDailyResponse(response, stationTriplets, medianDate) {
+      const medians = new Map();
+      for (const triplet of stationTriplets) {
+        const exactValue = findElementValues(response, triplet).find((value) => value.date === medianDate);
+        if (exactValue?.median !== null && exactValue?.median !== undefined && Number.isFinite(Number(exactValue.median))) {
+          medians.set(triplet, Number(exactValue.median));
+        }
+      }
+      return medians;
+    }
+
+    async function loadData() {
+      const sequence = ++loadSequence;
+      setLoading(true);
+      clearStatus();
+      const selectedDate = dateInput.value;
+      const currentMode = selectedDate === utahDate;
+
+      try {
+        if (!stations.length) {
+          const metadataUrl = `${AWDB_BASE}/stations?stationTriplets=*%3AUT%3ASNTL&elements=WTEQ&durations=DAILY&activeOnly=true&returnStationElements=true`;
+          const metadata = await fetchJson(metadataUrl);
+          stations = metadata
+            .filter((station) => Number.isFinite(Number(station.latitude)) && Number.isFinite(Number(station.longitude)))
+            .map((station) => ({
+              id: station.stationTriplet,
+              name: station.name,
+              lat: Number(station.latitude),
+              lng: Number(station.longitude),
+              elevation: station.elevation,
+              stationId: station.stationId,
+              dataTimeZone: Number(station.dataTimeZone)
+            }));
+        }
+
+        const triplets = stations.map((station) => station.id);
+        let processed;
+        if (currentMode) {
+          const medianDate = previousMatchingCalendarDate(selectedDate);
+          if (!medianDate) throw new Error("No matching calendar date is available for the daily median lookup");
+          const [hourlyResponse, medianResponse] = await Promise.all([
+            requestStationData(triplets, "HOURLY", "-24", "0", false),
+            requestStationData(triplets, "DAILY", medianDate, medianDate, true)
+          ]);
+          if (sequence !== loadSequence) return;
+          const dailyMedians = medianValuesFromDailyResponse(medianResponse, triplets, medianDate);
+          processed = stations.map((station) =>
+            processCurrentStation(findElementValues(hourlyResponse, station.id), station, dailyMedians.get(station.id) ?? null, medianDate)
+          );
+        } else {
+          const dailyResponse = await requestStationData(triplets, "DAILY", selectedDate, selectedDate, true);
+          if (sequence !== loadSequence) return;
+          processed = stations.map((station) =>
+            processHistoricalStation(findElementValues(dailyResponse, station.id), station, selectedDate)
+          );
+        }
+
+        lastSuccessfulResult = { stations: processed, selectedDate, currentMode };
+        renderStations(processed);
+        clearStatus();
+      } catch (error) {
+        if (lastSuccessfulResult) {
+          showStatus(`NRCS request failed. Showing last-known data for ${lastSuccessfulResult.selectedDate}. ${error.message}`, true);
+          renderStations(lastSuccessfulResult.stations);
+        } else {
+          showStatus(`NRCS AWDB data could not be loaded. ${error.message}`, true);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function renderStations(processed) {
+      markerLayer.clearLayers();
+      stationOptions.replaceChildren();
+      stationButtons.clear();
+      stationMarkers.clear();
+
+      const valid = processed.filter((station) => station.percent !== null && Number.isFinite(station.percent));
+      const average = valid.length
+        ? valid.reduce((sum, station) => sum + station.percent, 0) / valid.length
+        : null;
+      const currentMode = dateInput.value === utahDate;
+      const hourlyReadings = processed.filter((station) => station.swe !== null && Number.isFinite(station.swe)).length;
+      const unapprovedReadings = processed.filter((station) => station.qaFlag && station.qaFlag !== "A" && station.swe !== null).length;
+      document.querySelector("#statewide-average").textContent = average === null ? "Unavailable" : `${Math.round(average)}%`;
+      document.querySelector("#station-count").textContent = `${valid.length} / ${processed.length}`;
+      document.querySelector("#summary-mode").textContent = currentMode ? "Current · hourly" : "Historical · daily";
+      document.querySelector("#summary-note").textContent = currentMode
+        ? `${hourlyReadings} recent hourly SWE readings; ${unapprovedReadings} unapproved and excluded from calculations`
+        : "NRCS daily observations for the exact selected date";
+      document.querySelector("#map-status-text").textContent = `${processed.length} active Utah SNOTEL stations with SWE monitoring`;
+
+      for (const station of processed) {
+        const color = markerColor(station.percent);
+        const marker = L.circleMarker([station.lat, station.lng], {
+          radius: 8,
+          color: "#ffffff",
+          weight: 2,
+          fillColor: color,
+          fillOpacity: 1
+        }).addTo(markerLayer);
+        const percentLabel = station.percent === null
+          ? "Unavailable"
+          : `${Math.round(station.percent)}% of median`;
+        marker.bindTooltip(`${station.name} · ${percentLabel}`, { direction: "top", offset: [0, -8] });
+
+        const popup = document.createElement("div");
+        const popupName = document.createElement("strong");
+        popupName.textContent = station.name;
+        const popupStatus = document.createElement("p");
+        popupStatus.textContent = `${percentLabel} — ${station.status}`;
+        popup.append(popupName, popupStatus);
+        marker.bindPopup(popup);
+        marker.on("click", () => selectStation(station));
+        stationMarkers.set(station.id, marker);
+
+        const item = document.createElement("li");
+        const button = document.createElement("button");
+        button.className = "station-option";
+        button.type = "button";
+        button.setAttribute("aria-pressed", "false");
+        const swatch = document.createElement("span");
+        swatch.className = "swatch";
+        swatch.style.backgroundColor = color;
+        swatch.setAttribute("aria-hidden", "true");
+        const copy = document.createElement("span");
+        copy.className = "station-option-copy";
+        const name = document.createElement("strong");
+        name.textContent = station.name;
+        const description = document.createElement("span");
+        description.textContent = `${percentLabel} · ${station.status}`;
+        copy.append(name, description);
+        button.append(swatch, copy);
+        button.addEventListener("click", () => {
+          selectStation(station);
+          map.panTo([station.lat, station.lng]);
+          stationMarkers.get(station.id).openPopup();
+        });
+        item.append(button);
+        stationOptions.append(item);
+        stationButtons.set(station.id, button);
+      }
+
+      if (selectedStationId) {
+        const selected = processed.find((station) => station.id === selectedStationId);
+        if (selected) selectStation(selected);
+      }
+    }
+
+    async function selectStation(station) {
+      selectedStationId = station.id;
       document.querySelector("#station-name").textContent = station.name;
       document.querySelector("#station-id").textContent = station.id;
-      document.querySelector("#station-elevation").textContent = `SAMPLE · ${station.elevation.toLocaleString()} ft`;
-      document.querySelector("#station-date").textContent = station.date ?? "SAMPLE · unavailable";
-      document.querySelector("#station-swe").textContent = station.swe === undefined ? "SAMPLE · unavailable" : `SAMPLE · ${station.swe.toFixed(1)} in`;
-      document.querySelector("#station-median").textContent = station.median === undefined ? "SAMPLE · unavailable" : `SAMPLE · ${station.median.toFixed(1)} in`;
-      document.querySelector("#station-percent").textContent = station.percent === null ? "SAMPLE · unavailable" : `SAMPLE · ${station.percent}%`;
+      document.querySelector("#station-elevation").textContent = Number.isFinite(Number(station.elevation))
+        ? `${Number(station.elevation).toLocaleString()} ft`
+        : "Unavailable";
+      document.querySelector("#station-date").textContent = station.observationDate ?? "Unavailable";
+      document.querySelector("#station-timestamp").textContent = station.observationTimestamp
+        ? `${timestampLabel(station, station.observationTimestamp)} · ${station.ageHours === null ? "age unavailable" : `${Math.floor(station.ageHours)} hours old`}`
+        : "Daily AWDB date; exact time not provided";
+      document.querySelector("#station-swe").textContent = station.swe === null || !Number.isFinite(Number(station.swe))
+        ? "Unavailable"
+        : `${Number(station.swe).toFixed(1)} in`;
+      document.querySelector("#station-median").textContent = station.median === null || !Number.isFinite(Number(station.median))
+        ? "Unavailable"
+        : `${Number(station.median).toFixed(1)} in`;
+      document.querySelector("#station-median-source").textContent = station.medianReferenceDate
+        ? `NRCS 1991–2020 median for this calendar day; lookup ${station.medianReferenceDate}. That date's SWE is not used.`
+        : station.median === null || !Number.isFinite(Number(station.median))
+          ? "Unavailable"
+          : "NRCS 1991–2020 median for selected date";
+      document.querySelector("#station-percent").textContent = station.percent === null
+        ? "Unavailable"
+        : `${Math.round(station.percent)}%`;
       document.querySelector("#station-availability").textContent = station.status;
       stationEmptyState.hidden = true;
       stationDetails.hidden = false;
-      stationStatus.textContent = `${station.name} selected. SAMPLE data only.`;
+      stationStatus.textContent = `${station.name} selected. ${station.status}.`;
+      const sourceUrl = new URL(`${AWDB_BASE}/data`);
+      sourceUrl.searchParams.set("stationTriplets", station.id);
+      sourceUrl.searchParams.set("elements", "WTEQ");
+      sourceUrl.searchParams.set("duration", station.observationTimestamp ? "HOURLY" : "DAILY");
+      sourceUrl.searchParams.set("beginDate", station.observationTimestamp ? "-24" : dateInput.value);
+      sourceUrl.searchParams.set("endDate", station.observationTimestamp ? "0" : dateInput.value);
+      sourceUrl.searchParams.set("returnFlags", "true");
+      sourceUrl.searchParams.set("periodRef", "END");
+      if (!station.observationTimestamp) sourceUrl.searchParams.set("centralTendencyType", "MEDIAN");
+      document.querySelector("#station-source").href = sourceUrl.toString();
 
       for (const [stationId, button] of stationButtons) {
         button.setAttribute("aria-pressed", String(stationId === station.id));
       }
+      await loadStationGraph(station);
     }
 
-    for (const station of sampleStations) {
-      const color = markerColor(station);
-      const marker = L.circleMarker([station.lat, station.lng], {
-        radius: 9,
-        color: "#ffffff",
-        weight: 2,
-        fillColor: color,
-        fillOpacity: 1
-      }).addTo(map);
-      const percentLabel = station.percent === null ? "UNAVAILABLE · SAMPLE" : `SAMPLE · ${station.percent}% of median`;
-      marker.bindTooltip(`${station.name} · ${percentLabel}`, { direction: "top", offset: [0, -8] });
-
-      const popup = document.createElement("div");
-      const popupName = document.createElement("strong");
-      popupName.textContent = station.name;
-      const popupStatus = document.createElement("p");
-      popupStatus.textContent = percentLabel;
-      popup.append(popupName, popupStatus);
-      marker.bindPopup(popup);
-      marker.on("click", () => selectStation(station));
-      stationMarkers.set(station.id, marker);
-
-      const item = document.createElement("li");
-      const button = document.createElement("button");
-      button.className = "station-option";
-      button.type = "button";
-      button.setAttribute("aria-pressed", "false");
-      const swatch = document.createElement("span");
-      swatch.className = "swatch";
-      swatch.style.backgroundColor = color;
-      swatch.setAttribute("aria-hidden", "true");
-      const copy = document.createElement("span");
-      copy.className = "station-option-copy";
-      const name = document.createElement("strong");
-      name.textContent = station.name;
-      const description = document.createElement("span");
-      description.textContent = percentLabel;
-      copy.append(name, description);
-      button.append(swatch, copy);
-      button.addEventListener("click", () => {
-        selectStation(station);
-        map.panTo([station.lat, station.lng]);
-        stationMarkers.get(station.id).openPopup();
+    function pathFromValues(values, yForValue) {
+      let path = "";
+      let connected = false;
+      values.forEach((value, index) => {
+        if (value === null || !Number.isFinite(value)) {
+          connected = false;
+          return;
+        }
+        const x = 58 + (index / Math.max(1, values.length - 1)) * 397;
+        const y = yForValue(value);
+        path += `${connected ? " L" : " M"}${x.toFixed(1)} ${y.toFixed(1)}`;
+        connected = true;
       });
-      item.append(button);
-      stationOptions.append(item);
-      stationButtons.set(station.id, button);
+      return path;
     }
+
+    async function loadStationGraph(station) {
+      const selectedDate = dateInput.value;
+      const startDate = waterYearStart(selectedDate);
+      const chart = document.querySelector("#swe-chart");
+      document.querySelector("#graph-status").innerHTML = "<strong>Graph status:</strong> Loading NRCS graph observations…";
+      try {
+        const url = new URL(`${AWDB_BASE}/data`);
+        url.searchParams.set("stationTriplets", station.id);
+        url.searchParams.set("elements", "WTEQ");
+        url.searchParams.set("duration", "DAILY");
+        url.searchParams.set("beginDate", startDate);
+        url.searchParams.set("endDate", selectedDate);
+        url.searchParams.set("centralTendencyType", "MEDIAN");
+        url.searchParams.set("returnFlags", "true");
+        url.searchParams.set("periodRef", "END");
+        const response = await fetchJson(url.toString());
+        const values = findElementValues(response, station.id);
+        const byDate = new Map(values.filter((value) => value?.date).map((value) => [value.date, value]));
+        const dates = [];
+        for (let cursor = new Date(`${startDate}T12:00:00`); cursor <= new Date(`${selectedDate}T12:00:00`); cursor.setDate(cursor.getDate() + 1)) {
+          const year = cursor.getFullYear();
+          const month = String(cursor.getMonth() + 1).padStart(2, "0");
+          const day = String(cursor.getDate()).padStart(2, "0");
+          dates.push(`${year}-${month}-${day}`);
+        }
+        const sweValues = dates.map((date) => {
+          const value = byDate.get(date);
+          if (!value || value.qcFlag !== "V" || value.qaFlag !== "A" || value.value === null || value.value === undefined) return null;
+          return Number(value.value);
+        });
+        const medianValues = dates.map((date) => {
+          const value = byDate.get(date);
+          if (!value || value.median === null || value.median === undefined) return null;
+          return Number(value.median);
+        });
+        const allNumbers = [...sweValues, ...medianValues].filter((value) => Number.isFinite(value));
+        const maxValue = allNumbers.length ? Math.max(...allNumbers, 1) : 1;
+        const yMax = Math.ceil(maxValue / 10) * 10;
+        const yForValue = (value) => 203 - (value / yMax) * 163;
+
+        const swePath = pathFromValues(sweValues, yForValue);
+        const medianPath = pathFromValues(medianValues, yForValue);
+        chart.innerHTML = `
+          <title id="graph-title">${station.name} water-year SWE</title>
+          <desc id="graph-desc">Measured SWE and 1991–2020 median SWE in inches from ${startDate} through ${selectedDate}. Missing observations appear as gaps.</desc>
+          <text class="graph-title" x="48" y="18">SWE (inches)</text>
+          <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
+          <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
+          <line class="graph-grid" x1="58" y1="140" x2="455" y2="140"></line>
+          <line class="graph-grid" x1="58" y1="185" x2="455" y2="185"></line>
+          <line class="graph-axis" x1="58" y1="40" x2="58" y2="203"></line>
+          <line class="graph-axis" x1="58" y1="203" x2="455" y2="203"></line>
+          <text class="graph-text" x="48" y="54" text-anchor="end">${yMax}</text>
+          <text class="graph-text" x="48" y="99" text-anchor="end">${Math.round(yMax * 0.75)}</text>
+          <text class="graph-text" x="48" y="144" text-anchor="end">${Math.round(yMax * 0.5)}</text>
+          <text class="graph-text" x="48" y="189" text-anchor="end">${Math.round(yMax * 0.25)}</text>
+          <text class="graph-text" x="58" y="220" text-anchor="middle">${startDate}</text>
+          <text class="graph-text" x="455" y="220" text-anchor="middle">${selectedDate}</text>
+          <text class="graph-title" x="256" y="248" text-anchor="middle">Date</text>
+          ${swePath ? `<path class="graph-line-one" d="${swePath}"></path>` : ""}
+          ${medianPath ? `<path class="graph-line-two" d="${medianPath}"></path>` : ""}
+        `;
+        document.querySelector("#graph-status").innerHTML = `<strong>Graph status:</strong> NRCS WTEQ observations and median values loaded for ${station.name}.`;
+      } catch (error) {
+        document.querySelector("#graph-status").innerHTML = `<strong>Graph unavailable:</strong> ${error.message}`;
+        chart.innerHTML = `<text class="graph-title" x="240" y="130" text-anchor="middle">Graph unavailable</text>`;
+      }
+    }
+
+    retryButton.addEventListener("click", loadData);
+    let dateTimer;
+    dateInput.addEventListener("change", () => {
+      if (!dateInput.value) return;
+      window.clearTimeout(dateTimer);
+      dateTimer = window.setTimeout(loadData, 150);
+    });
+
+    loadData();
   </script>
 </body>
 </html>

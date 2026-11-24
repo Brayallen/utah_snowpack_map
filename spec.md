@@ -6,24 +6,31 @@ The Utah Snowpack Map is an informational app for viewing Utah's active SNOTEL s
 ## Purpose
 Create an interactive map showing how Utah snowpack compares with the 1991-2020 median. The app provides both a statewide summary and station-level comparisons for engineers, water managers, and Utah residents.
 
-Selecting today's date in America/Denver uses current mode: use the latest valid NRCS observation available for each station, and treat it as stale if its observation timestamp is more than 24 hours old. Selecting an earlier date uses historical mode: use only an observation from that exact selected date. Do not substitute or interpolate observations. The app is informational and does not provide forecasts, reservoir calculations, or flood warnings.
+Selecting today's date in America/Denver uses current mode: retrieve recent hourly NRCS WTEQ observations and show the latest actual measurement with its timestamp, even when its QA flag is Raw (`R`) or Provisional (`P`). Identify readings whose QA flag is not Approved (`A`) as unapproved, show their SWE separately, and do not calculate percent of median or include them in the statewide average. Use the station's AWDB `dataTimeZone` offset and the hourly observation timestamp to enforce the 24-hour freshness limit. Only current observations passing the approved quality checks and nonzero-median rule may be used for percent-of-median markers and statewide calculations.
+
+Selecting an earlier date uses historical mode: use only a DAILY observation from that exact selected date, and apply the existing `qcFlag=V` and `qaFlag=A` requirements. Do not substitute or interpolate SWE observations. The app is informational and does not provide forecasts, reservoir calculations, or flood warnings.
 
 ## Inputs
 - Date picker defaults to the current date in Utah local time (America/Denver).
 - Allowed historical date range is October 1, 1991 through today. Future dates are rejected, and station-specific dates outside the station's valid record or 1991-2020 median coverage are unavailable.
 - The map uses live active Utah SNOTEL stations that contain snow water equivalent (WTEQ) data.
+- Current mode uses recent HOURLY WTEQ data; historical mode uses DAILY WTEQ data for the exact selected date.
 - Users select a station by clicking its marker on the map.
 - The eligible-station denominator includes every active Utah SNOTEL station with SWE monitoring capability, even when its observation or median SWE is unavailable for the selected date.
 - The valid-station numerator includes only stations with an acceptable observation for the selected mode and date, valid AWDB quality flags, a current-mode observation age of no more than 24 hours when applicable, and a nonzero median SWE.
 - Missing, stale, or quality-failed observations are not interpolated or treated as measurements.
+- Current mode may display a real hourly SWE value flagged Raw (`qaFlag=R`) or Provisional (`qaFlag=P`) as unapproved, with its AWDB timestamp and station time-zone offset. These readings are excluded from percent-of-median markers and the statewide average.
 
 ## Calculations
 - Use snow water equivalent (SWE) in inches, displayed to 0.1 inch.
 - For each station, median SWE is the station's NRCS 1991-2020 median for the exact selected calendar day.
+- Current-mode hourly SWE has no hourly median in the AWDB response. Retrieve the official daily median using an AWDB DAILY request for the same month and day in a year with an available daily record. Use only that response's `median` field, which represents the 1991-2020 median; never use its SWE `value` as a substitute for the current hourly SWE.
 - Percent of median SWE = (Current SWE / Median SWE) x 100.
 - Calculate from unrounded SWE and median values, then display station percentages as whole percentages.
 - Percentages may exceed 100%.
 - Exclude missing, stale, and quality-failed observations. Valid observations require AWDB qcFlag=V and qaFlag=A.
+- AWDB QA flags used in current mode: `R` = Raw, `P` = Provisional, and `A` = Approved. Raw and Provisional SWE may be displayed with explicit status but are not valid for percentages or statewide calculations.
+- In current mode, calculate observation age from the hourly timestamp interpreted with the station's AWDB `dataTimeZone` offset. Observations older than 24 hours are stale and excluded from calculations.
 - Exclude stations with median SWE equal to zero because percent of median is undefined.
 - Statewide average = arithmetic mean of valid station percentages, with no station weighting.
 - Label this result "Average of valid station percentages (unweighted)".
@@ -41,6 +48,8 @@ Selecting today's date in America/Denver uses current mode: use the latest valid
 - Display missing, invalid, stale, or zero-median stations as solid gray markers.
 - Exclude gray markers from the statewide average and explain the station's unavailable status in the tooltip or station details.
 - A station detail panel containing station name, elevation, selected date, observation timestamp, SWE, median SWE, percent of median, and NRCS source information.
+- In current mode, display the latest available hourly SWE and timestamp even for Raw or Provisional readings. Label unapproved or stale readings clearly, display percent of median as unavailable when quality/date/freshness rules fail, and exclude them from statewide calculations.
+- For the current-mode median lookup, identify that the daily `median` field is sourced from the same calendar day; do not imply that the lookup year's SWE value is the current observation.
 - SWE and median SWE are in inches and displayed to 0.1 inch; percent of median is displayed as a whole percentage.
 - A two-line station SWE graph spanning October 1 through the selected date:
   - selected water year's SWE
@@ -63,6 +72,7 @@ Selecting today's date in America/Denver uses current mode: use the latest valid
 - Display clear unavailable-data messages for missing, invalid, stale, or out-of-range observations.
 - If an NRCS API request fails, preserve previously loaded data, label it explicitly as last-known data, and show a Retry button.
 - Treat a current-mode observation as stale and unavailable after 24 hours.
+- In current mode, show the most recent hourly SWE timestamp with the AWDB station time-zone offset and observation age; use text labels for Raw, Provisional, Approved, stale, and unavailable statuses.
 - Historical observations must match the exact selected date; do not show an earlier or interpolated observation.
 - Make SWE graphs responsive and preserve readable axis labels and units on narrow screens.
 - Show gaps rather than connecting across missing historical observations.
@@ -184,11 +194,14 @@ Build and review one stage at a time. Do not begin a later stage until the prece
 
 **What will be built:**
 - NRCS AWDB station metadata and observation integration.
+- Current mode uses recent hourly WTEQ observations and station `dataTimeZone` offsets for the 24-hour age check; historical mode uses exact-date daily WTEQ observations.
+- Current-mode daily median lookup uses only the official AWDB `median` field for the same calendar day and never reuses a prior year's actual SWE value.
 - Current/historical mode behavior, SWE and median calculations, statewide summary and coverage, station details, and selected water-year SWE and 1991-2020 median graphs.
 - Loading, unavailable, API failure, last-known-data, and retry states.
 
 **What to test or check:**
 - Check today's America/Denver date uses current mode and the 24-hour stale threshold; earlier dates use exact-date historical mode.
+- Check current Raw (`R`) and Provisional (`P`) hourly SWE is displayed with its timestamp and unapproved status but remains unavailable for percent-of-median markers and the statewide average.
 - Check AWDB quality flags, missing values, zero medians, units, rounding, map classification, statewide numerator and denominator, graph labels, and missing-data gaps.
 
 **Completion criteria:**
