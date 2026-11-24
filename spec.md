@@ -46,10 +46,26 @@ In current mode, "current" means the latest valid NRCS observation available for
 - A sortable station table and CSV downloads are out of the initial build.
 
 ## Look and Feel
-- Clean, easy-to-read layout with a large Utah map.
-- Summary information at the top.
-- Station details and graph appear when a marker is clicked.
-- Layout should work on desktop and mobile.
+- Use a clean, professional, engineering-focused layout with clear hierarchy and readable text.
+- On initial load, display the statewide snowpack summary, date picker, and full Utah SNOTEL map.
+- Do not automatically show a selected station's details or three-station validation summary.
+- On desktop, place the large interactive Utah map on the left and station details plus the SWE graph on the right.
+- On mobile, stack the statewide summary, date picker, map, station details, and graph vertically.
+- Allow users to zoom and pan the map so overlapping SNOTEL markers can be distinguished.
+- Show hover tooltips on desktop and tap interactions on mobile.
+- Clicking or keyboard-selecting a station opens its details and SWE graph.
+- Provide clear loading states while station metadata or observations are loading.
+- Display clear unavailable-data messages for missing, invalid, stale, or out-of-range observations.
+- If an NRCS API request fails, preserve previously loaded data, label it explicitly as last-known data, and show a Retry button.
+- Treat a current-mode observation as stale and unavailable after 24 hours.
+- Historical observations must match the exact selected date; do not show an earlier or interpolated observation.
+- Make SWE graphs responsive and preserve readable axis labels and units on narrow screens.
+- Show gaps rather than connecting across missing historical observations.
+- Display a visible map legend for all five marker color ranges and the solid-gray unavailable state.
+- Use sufficient color contrast and accessible text labels.
+- Station selection and Retry controls must support keyboard focus and visible focus indicators.
+- Status, unavailable, stale, and last-known-data indicators must not rely on color alone.
+- Default the date picker to today's date in America/Denver and prevent future dates.
 
 ## Validation
 Initial station-level reference values are obtained from the NRCS AWDB for April 1, 2025:

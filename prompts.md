@@ -284,3 +284,86 @@ validation. Update prompts.md only; do not build app code.
 **Result:**
 The approved Validation section was added. No app code or build artifacts were
 created.
+
+## Prompt 11 - Review Look and Feel Preferences
+
+**Prompt:**
+Finalize the planned Look and Feel section. Review a clean engineering design
+with a left Utah map and right station details on desktop, vertical stacking on
+mobile, loading/unavailable/API failure states, the approved marker scale,
+mouse and keyboard station selection, responsive graphs, Utah date defaults,
+future-date prevention, and accessibility. Identify conflicts or technical
+limitations and ask up to three design questions before editing spec.md.
+Update prompts.md only; do not build app code.
+
+**Agent Response / Decisions:**
+- Reviewed the proposed desktop and mobile layouts against existing outputs,
+  calculations, and validation rules.
+- Identified remaining design questions for loading/failure behavior, default
+  station-detail behavior, and stale-data handling.
+- No Look and Feel specification edits or app implementation were performed.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 11 entry.
+
+**Result:**
+Planning review in progress. Look and Feel decisions await clarification.
+
+## Prompt 12 - Finalize Look and Feel Decisions
+
+**Prompt:**
+Review the Look and Feel preferences and identify design conflicts, technical
+limitations, or missing requirements. Ask up to three questions needed to
+finalize design. Do not modify spec.md or build app code; update prompts.md.
+
+**Agent Response / Decisions:**
+- Selected API failure behavior: keep the last successful data on screen,
+  clearly label it as stale or last-known, and provide a Retry action.
+- Selected initial desktop/mobile detail state: show the three-station validation
+  summary for Brighton, Snowbird, and Ben Lomond Peak before an individual
+  station is selected.
+- Selected stale threshold: observations are unavailable after 24 hours in
+  current mode. Historical mode remains exact selected-date data and is not
+  made unavailable merely because it is old.
+- Identified technical considerations: 140 markers need sufficient spacing,
+  keyboard access, hover-versus-tap handling, responsive chart labels, API
+  partial failures, and non-color-only station status.
+- No Look and Feel section edits or app implementation were performed.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 12 entry.
+
+**Result:**
+The remaining Look and Feel decisions were resolved and are ready for a later
+specification-edit step.
+
+## Prompt 13 - Update Look and Feel Section
+
+**Prompt:**
+Approve the Look and Feel recommendations with one adjustment: open with the
+statewide snowpack summary and full Utah SNOTEL map, not a validation summary.
+Station details appear after selection. Add desktop and mobile layouts, map
+zooming, hover/tap behavior, keyboard selection, loading/unavailable states,
+last-known-data API failure behavior with Retry, the 24-hour current-mode stale
+threshold, exact historical-date matching, responsive and accessible charts,
+visible legend, and sufficient contrast. Update only Look and Feel in spec.md,
+maintain prompts.md, do not build app code, and identify remaining Out of Scope
+decisions afterward.
+
+**Agent Response / Decisions:**
+- Updated only the Look and Feel section of spec.md.
+- Added initial statewide summary/map behavior and post-selection station details.
+- Added desktop and mobile layout requirements, map zoom, interaction methods,
+  loading and unavailable states, API retry behavior, stale-data handling,
+  exact-date matching, chart responsiveness, legend, keyboard access, and
+  accessible status indicators.
+- Identified that Out of Scope still needs only an explicit boundary-review
+  confirmation unless additional exclusions are requested.
+
+**Files Changed:**
+- `spec.md`: updated only the Look and Feel section.
+- `prompts.md`: appended this Prompt 13 entry.
+
+**Result:**
+The approved Look and Feel section was applied. No app code or build artifacts
+were created.
