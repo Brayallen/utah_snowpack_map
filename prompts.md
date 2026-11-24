@@ -752,3 +752,268 @@ confirm historical values, and do not start Stage 4, add features, or commit.
 The Stage 3 current-data correction was tested for both requested dates, and
 historical reference values remained unchanged. Stage 4 and optional features
 were not started, and no commit was created.
+
+## Prompt 24 - Stage 4 Required-App Validation
+
+**Prompt:**
+Validate Brighton, Snowbird, and Ben Lomond Peak for April 1, 2025 against the
+approved AWDB references; independently compare the official NRCS Utah Snow
+Survey report; show Brighton's hand calculation; test missing, invalid-quality,
+zero-median, stale, and exact-date behavior; confirm Raw/Provisional exclusion
+and the unweighted valid-only statewide average; test station selection,
+historical graphs, keyboard use, and desktop/mobile layouts. Record expected and
+actual values, differences, outcomes, and sources in spec.md. Update this log.
+Do not begin Stages 5 or 6, invent data, change calculations without explanation,
+or commit.
+
+**Agent Response / Decisions:**
+- Browser-checked the April 1, 2025 AWDB reference cases. App results matched
+  exactly: Brighton 21.4/21.6 inches and 99%; Snowbird 38.6/36.5 inches and
+  106%; Ben Lomond Peak 33.4/33.4 inches and 100%. Each station passed the
+  0.1-inch SWE and nearest-whole-percent acceptance criteria.
+- Confirmed Brighton's calculation: `(21.4 / 21.6) × 100 = 99.074...%`,
+  i.e. 99.07%, displayed as 99%.
+- Retrieved the official Utah SNOTEL Snow/Precipitation Update Report for
+  April 1, 2025. It is marked provisional and based on the first reading of the
+  day (typically 00:00). It reports Brighton 20.8/21.2 inches at 98%,
+  Snowbird 37.7/36.3 inches at 104%, and Ben Lomond Peak 33.1/33.3 inches at
+  99%. The app-minus-report differences are respectively +0.6/+0.4 inches/+1
+  percentage point; +0.9/+0.2 inches/+2 points; and +0.3/+0.1 inches/+1
+  point. These comparisons do not match and are not reported as passes. The
+  exact cause/convention difference remains unresolved; no calculation was
+  changed.
+- Controlled in-browser tests of the app's processing/rendering functions
+  passed for exact-date-only history, missing prior-day-only data, invalid QC
+  and QA flags, zero median, a 30-hour stale reading, and Raw/Provisional
+  current observations. Raw/Provisional SWE remains visible with status while
+  percent is unavailable and those readings are excluded.
+- The unweighted-average fixture with valid percentages 200% and 100% among
+  four eligible stations displayed 150% and 2/4, confirming unavailable
+  stations do not enter the average.
+- The live April 1, 2025 statewide result was 65/141 valid stations with a 95%
+  unweighted average; it was not compared with a basin-weighted NRCS statistic.
+- Snowbird keyboard selection opened its station details and graph. The graph
+  loaded both SWE series. Browser checks at 390px and 1440px found no horizontal
+  overflow; no JavaScript errors were reported.
+- A controlled stale-reading case found that the summary wording called all
+  numeric hourly readings “recent.” Changed this label to “hourly SWE readings”;
+  no calculations or eligibility rules changed.
+- Updated Validation in spec.md with expected and actual AWDB values,
+  differences, the report comparison and source, edge/UI test outcomes, and
+  unresolved limitations. Stage 4 is not complete pending review of the
+  independent report discrepancy. Stages 5 and 6 were not started.
+
+**Files Changed:**
+- `index.html`: corrected the current-summary wording only; calculation behavior
+  was unchanged.
+- `spec.md`: replaced planned validation language with actual AWDB, official
+  report, edge-case, interaction, and layout results plus unresolved issues.
+- `prompts.md`: appended this Prompt 24 entry and outcomes.
+
+**Result:**
+AWDB reference checks and controlled functional/UI tests passed. Independent
+NRCS report comparisons differed for all three stations, so validation remains
+unresolved and Stage 4 is not approved complete. No optional stage was started
+and no commit was created.
+
+## Prompt 25 - Investigate AWDB and Utah Report Date Alignment
+
+**Prompt:**
+Investigate why the April 1, 2025 Utah Snow Survey report differs from the app's
+AWDB DAILY values. Verify observation timing, reporting-period and median
+conventions, quality flags, whether the app request follows the approved spec,
+and recommend preserving or changing retrieval. Explain how to document the
+result without claiming unmatched report comparisons passed. Do not edit
+spec.md or index.html, commit, or begin Stage 5; update this log only.
+
+**Agent Response / Findings:**
+- Queried the official AWDB DAILY WTEQ endpoint for all three triplets on
+  2025-04-01 with `centralTendencyType=MEDIAN`, `returnFlags=true`, and both
+  `periodRef=END` and `periodRef=START`.
+- The app's approved `periodRef=END` request returned:
+  - Brighton: 21.4 SWE / 21.6 median, `qcFlag=V`, `qaFlag=A`.
+  - Snowbird: 38.6 SWE / 36.5 median, `qcFlag=V`, `qaFlag=A`.
+  - Ben Lomond Peak: 33.4 SWE / 33.4 median, `qcFlag=V`, `qaFlag=A`.
+- AWDB `periodRef=START` for 2025-04-01 instead returned Brighton 20.8/21.2,
+  Snowbird 37.7/36.3, and Ben Lomond Peak 33.1/33.3, all with valid `V/A`
+  flags. Those values reproduce the official report's SWE and median values.
+- A daily `periodRef=END` request for 2025-03-31 returns those same values as
+  `periodRef=START` for 2025-04-01. The API documentation defines `periodRef`
+  as choosing the timestamp at the start or end of the observation period.
+  Thus, the difference is the daily period boundary/date labeling: the app's
+  April 1 END records are the later end-of-period readings, not the report's
+  first reading on April 1.
+- Queried AWDB HOURLY WTEQ for March 31 through April 1. The April 1 00:00
+  readings are exactly the report's current SWE: Brighton 20.8, Snowbird 37.7,
+  Ben Lomond Peak 33.1; all three have `qcFlag=V` and `qaFlag=A`.
+- The report identifies itself as provisional and says it is based on the
+  first reading of the day (typically 00:00). The report's medians also match
+  the AWDB `periodRef=START` values. There is no evidence that a different
+  median climatology or Raw/Provisional QA flags caused the discrepancies;
+  the median changes with the period/date alignment.
+- Confirmed the Stage 3 historical code sends exact selected-date DAILY
+  requests with `periodRef=END`, `centralTendencyType=MEDIAN`, and
+  `returnFlags=true`, then requires exact date plus `qcFlag=V` and `qaFlag=A`.
+  This correctly implements the currently approved specification and AWDB
+  reference query, but it does not select the report's first-reading
+  convention.
+- Recommendation: preserve the approved `periodRef=END` calculations and
+  AWDB validation baseline until the user approves any change. If the required
+  meaning of a selected date is instead the report's first reading at 00:00,
+  changing to `periodRef=START` would require revising the validation values,
+  historical display, and graph data convention together. Do not present the
+  current independent report comparisons as passed against the app's
+  `periodRef=END` values.
+- Recommended future spec documentation: retain separate AWDB END and report/
+  START reference rows; state that the report is provisional and based on
+  first daily reading; show the numeric differences and explain that they are
+  period-alignment differences; leave independent comparisons marked
+  unmatched until the date convention is approved.
+- No calculations, index.html, or spec.md were changed. Stage 5 was not begun
+  and no commit was created.
+
+**Sources:**
+- AWDB data endpoint, queryable with the triplets and dates described above:
+  `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data`
+- AWDB API documentation, including the `periodRef` definition:
+  `https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs`
+- Official April 1, 2025 Utah SNOTEL Snow/Precipitation Update Report:
+  `https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?report=Utah&year=2025&month=4&day=1`
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 25 investigation and findings.
+
+**Result:**
+The mismatch is explained by AWDB daily period-reference alignment, not an
+AWDB parsing error or a quality-flag failure. Preserve the approved END-mode
+calculation pending user review; the independent report comparison remains
+unmatched under that convention. No Stage 5 work or commit was performed.
+
+## Prompt 26 - Plan Historical START-Period Alignment
+
+**Prompt:**
+Plan a Stage 4 change to historical daily `periodRef=START` so the app aligns
+with the official Utah Snow Survey report. Identify required updates to
+historical daily requests, SWE/median graphs, April 1 validation cases,
+Brighton's hand calculation, and the Calculations and Validation sections.
+Do not modify current-mode hourly handling, index.html, or spec.md yet. Explain
+risks and whether the independent report comparisons would pass. Update this
+prompt log only; do not commit or begin Stage 5.
+
+**Agent Response / Findings:**
+- Confirmed the April 1, 2025 official report's provisional first-reading
+  values match AWDB DAILY `periodRef=START` and the AWDB HOURLY values at
+  `2025-04-01 00:00`:
+  - Brighton: 20.8 inches SWE, 21.2 inches median, 98%.
+  - Snowbird: 37.7 inches SWE, 36.3 inches median, 104%.
+  - Ben Lomond Peak: 33.1 inches SWE, 33.3 inches median, 99%.
+  The matching AWDB START and hourly records have `qcFlag=V` and `qaFlag=A`.
+- Confirmed the app currently sends `periodRef=END` for historical daily
+  station requests, historical graph requests, and station source links. These
+  must be changed to START together to keep station values, both graph series,
+  and source URLs aligned.
+- The April 1, 2025 expected validation values should become the report/START
+  values above. Brighton's hand calculation should become
+  `(20.8 / 21.2) × 100 = 98.113...%`, or 98.11%, displayed as 98%.
+- Calculations documentation should define the historical DAILY convention as
+  START-of-period and continue using same-record SWE and 1991-2020 median,
+  unrounded for percent calculations. Validation should record the revised
+  triplet references, query with `periodRef=START`, exact report source,
+  provisional/first-reading convention, flags, and explicit app-vs-report
+  results after implementation and testing. Build-stage descriptions and
+  station-source links should be checked for matching historical convention.
+- The existing AWDB `periodRef=END` data and prior app behavior should be
+  retained as the old baseline/audit context, not silently relabeled as a
+  START result. Changing conventions will alter historical displayed SWE,
+  medians, percentages, statewide summaries, and graph values. Daily gaps,
+  exact-date matching, quality checks, and unrounded formulas remain unchanged.
+- The historical change does not require changing current-mode HOURLY WTEQ
+  retrieval, timestamps, `dataTimeZone`, freshness, or Raw/Provisional handling.
+  However, current mode separately retrieves a DAILY median for the matching
+  calendar day. Using END there may preserve the old median period convention;
+  using START would align that median with the selected report-date convention
+  but can change current-mode percentages, so this required a separate user
+  decision.
+- User decision: use `periodRef=START` for the current-mode DAILY median lookup
+  too, while leaving the HOURLY WTEQ request and its timestamp, freshness, and
+  quality handling unchanged.
+- Based on direct AWDB results, using START for the historical SWE and median
+  records is expected to make all three April 1 station comparisons match the
+  official report values and nearest-whole-percent results. This is a
+  prediction from source data, not a passed app test; formal comparisons must
+  be rerun after implementation.
+- No code, specification, calculations, or current-mode handling were changed.
+  Stage 5 was not begun and no commit was created.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 26 planning entry and findings.
+
+**Result:**
+The historical START-period change is scoped and expected to align the three
+validation stations with the official report. The user also approved START for
+the current-mode DAILY median lookup while keeping the HOURLY request unchanged.
+No implementation was started.
+
+## Prompt 27 - Implement Historical START Alignment
+
+**Prompt:**
+Implement the approved Stage 4 alignment in index.html and spec.md: use DAILY
+`periodRef=START` for historical station data, historical graph series, and
+historical source links; also use START for the current-mode DAILY median
+lookup without changing HOURLY SWE handling. Update validation references,
+Brighton's hand calculation, Calculations, and Stage 3/4 descriptions. Retest
+the app against AWDB START and the official report, including current data,
+graphs, average, keyboard, and responsive layouts. Update prompts.md. Do not
+add custom features, begin Stage 5, or commit.
+
+**Agent Response / Changes:**
+- Updated the data request helper to accept a period reference. Historical
+  daily station data and both SWE/median graph series now request START.
+  Historical station source links also use START.
+- Current-mode daily median lookup now requests START. The current HOURLY WTEQ
+  request remains HOURLY with its existing END reference; timestamp,
+  `dataTimeZone`, freshness, and quality handling were unchanged.
+- Updated spec.md Calculations, historical Inputs/Purpose, Validation, and
+  Stage 3/4 descriptions to define the START convention. Previous END values
+  are retained only as historical context.
+- Browser-tested April 1, 2025 against live AWDB START data and the official
+  Utah report:
+  - Brighton: app 20.8 / 21.2 in, 98%; report 20.8 / 21.2 in, 98%.
+  - Snowbird: app 37.7 / 36.3 in, 104%; report 37.7 / 36.3 in, 104%.
+  - Ben Lomond Peak: app 33.1 / 33.3 in, 99%; report 33.1 / 33.3 in, 99%.
+  All differences were zero and each comparison met the 0.1-inch SWE and
+  nearest-whole-percent criteria.
+- Brighton hand calculation is `(20.8 / 21.2) × 100 = 98.113...%`, or 98.11%,
+  displayed as 98%.
+- The April 1 live statewide result under START was 71/141 valid and 92%.
+  The earlier END run was 65/141 and 95%; the formula was not changed.
+- Historical graphs loaded both series for all three stations. Browser request
+  inspection confirmed historical station, graph, and source-link requests use
+  START. The current median request uses DAILY START, while hourly data requests
+  remain HOURLY END.
+- Current regression on November 24, 2026: 140 hourly values (139 Raw, 1
+  Provisional, 1 station with no reading), 0/141 valid. Brighton remained
+  3.1-inch Raw SWE at 2026-11-24 08:00, percent unavailable; its daily START
+  median was 3.4 inches. The hourly request/QA behavior was unchanged.
+- Rechecked exact-date missing, invalid QC/QA, and zero-median fixtures; each
+  remained unavailable as required. Keyboard selection opened station details
+  and graphs; 390px/1440px layouts had no horizontal overflow. No browser
+  errors were reported.
+- The independent report comparisons pass for these three April 1 cases. The
+  report remains provisional and can be revised upstream; the results are
+  specific to the retrieved report.
+- Stage 5 and the two optional features were not started; no commit was made.
+
+**Files Changed:**
+- `index.html`: applied START to historical DAILY requests, graph requests,
+  historical source links, and current-mode DAILY median lookup; hourly SWE
+  handling remains unchanged.
+- `spec.md`: updated the START convention, validation values/results, hand
+  calculation, and Stage 3/4 descriptions.
+- `prompts.md`: appended this Prompt 27 entry and test outcomes.
+
+**Result:**
+The three AWDB START and official report comparisons matched exactly in the
+live app. The requested Stage 4 alignment checks passed; the report's
+provisional status remains a limitation. No Stage 5 work or commit was
+performed.

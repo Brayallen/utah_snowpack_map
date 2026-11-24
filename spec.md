@@ -8,13 +8,13 @@ Create an interactive map showing how Utah snowpack compares with the 1991-2020 
 
 Selecting today's date in America/Denver uses current mode: retrieve recent hourly NRCS WTEQ observations and show the latest actual measurement with its timestamp, even when its QA flag is Raw (`R`) or Provisional (`P`). Identify readings whose QA flag is not Approved (`A`) as unapproved, show their SWE separately, and do not calculate percent of median or include them in the statewide average. Use the station's AWDB `dataTimeZone` offset and the hourly observation timestamp to enforce the 24-hour freshness limit. Only current observations passing the approved quality checks and nonzero-median rule may be used for percent-of-median markers and statewide calculations.
 
-Selecting an earlier date uses historical mode: use only a DAILY observation from that exact selected date, and apply the existing `qcFlag=V` and `qaFlag=A` requirements. Do not substitute or interpolate SWE observations. The app is informational and does not provide forecasts, reservoir calculations, or flood warnings.
+Selecting an earlier date uses historical mode: use only a DAILY observation from that exact selected date with AWDB `periodRef=START`, and apply the existing `qcFlag=V` and `qaFlag=A` requirements. Do not substitute or interpolate SWE observations. The app is informational and does not provide forecasts, reservoir calculations, or flood warnings.
 
 ## Inputs
 - Date picker defaults to the current date in Utah local time (America/Denver).
 - Allowed historical date range is October 1, 1991 through today. Future dates are rejected, and station-specific dates outside the station's valid record or 1991-2020 median coverage are unavailable.
 - The map uses live active Utah SNOTEL stations that contain snow water equivalent (WTEQ) data.
-- Current mode uses recent HOURLY WTEQ data; historical mode uses DAILY WTEQ data for the exact selected date.
+- Current mode uses recent HOURLY WTEQ data; historical mode uses DAILY WTEQ data for the exact selected date with `periodRef=START`.
 - Users select a station by clicking its marker on the map.
 - The eligible-station denominator includes every active Utah SNOTEL station with SWE monitoring capability, even when its observation or median SWE is unavailable for the selected date.
 - The valid-station numerator includes only stations with an acceptable observation for the selected mode and date, valid AWDB quality flags, a current-mode observation age of no more than 24 hours when applicable, and a nonzero median SWE.
@@ -23,8 +23,8 @@ Selecting an earlier date uses historical mode: use only a DAILY observation fro
 
 ## Calculations
 - Use snow water equivalent (SWE) in inches, displayed to 0.1 inch.
-- For each station, median SWE is the station's NRCS 1991-2020 median for the exact selected calendar day.
-- Current-mode hourly SWE has no hourly median in the AWDB response. Retrieve the official daily median using an AWDB DAILY request for the same month and day in a year with an available daily record. Use only that response's `median` field, which represents the 1991-2020 median; never use its SWE `value` as a substitute for the current hourly SWE.
+- Historical DAILY WTEQ observations and their 1991-2020 median use AWDB `periodRef=START`. The selected date denotes the start of the observation period (the report's first reading, typically 00:00); require the returned date to exactly match the selected date.
+- Current-mode hourly SWE has no hourly median in the AWDB response. Retrieve the official daily median using an AWDB DAILY request for the same month and day in a year with an available daily record, also using `periodRef=START`. Use only that response's `median` field, which represents the 1991-2020 median; never use its SWE `value` as a substitute for the current hourly SWE. This does not change current-mode HOURLY WTEQ retrieval or its timestamp, time-zone, freshness, or quality rules.
 - Percent of median SWE = (Current SWE / Median SWE) x 100.
 - Calculate from unrounded SWE and median values, then display station percentages as whole percentages.
 - Percentages may exceed 100%.
@@ -83,46 +83,70 @@ Selecting an earlier date uses historical mode: use only a DAILY observation fro
 - Default the date picker to today's date in America/Denver and prevent future dates.
 
 ## Validation
-Initial station-level reference values are obtained from the NRCS AWDB for April 1, 2025:
+### AWDB station-level reference tests
+
+The app was tested in the browser against the NRCS AWDB DAILY WTEQ response for April 1, 2025 using `periodRef=START`. The query used station triplets `366:UT:SNTL,766:UT:SNTL,332:UT:SNTL`, `elements=WTEQ`, `duration=DAILY`, `beginDate=2025-04-01`, `endDate=2025-04-01`, `centralTendencyType=MEDIAN`, `returnFlags=true`, and `periodRef=START`.
 
 | Station | Triplet | SWE | 1991-2020 median SWE | Percent of median |
 |---|---|---:|---:|---:|
-| Brighton | 366:UT:SNTL | 21.4 inches | 21.6 inches | 99% |
-| Snowbird | 766:UT:SNTL | 38.6 inches | 36.5 inches | 106% |
-| Ben Lomond Peak | 332:UT:SNTL | 33.4 inches | 33.4 inches | 100% |
+| Brighton | 366:UT:SNTL | 20.8 inches | 21.2 inches | 98% |
+| Snowbird | 766:UT:SNTL | 37.7 inches | 36.3 inches | 104% |
+| Ben Lomond Peak | 332:UT:SNTL | 33.1 inches | 33.3 inches | 99% |
 
-Brighton hand calculation:
-- SWE = 21.4 inches
-- Median SWE = 21.6 inches
-- Percent of median = (21.4 / 21.6) x 100 = 99.074%, displayed as 99%
+| Station | AWDB expected SWE / median / % | App actual SWE / median / % | Difference (app minus AWDB) | Result |
+|---|---|---|---|---|
+| Brighton | 20.8 in / 21.2 in / 98% | 20.8 in / 21.2 in / 98% | 0.0 in / 0.0 in / 0 percentage points | Pass |
+| Snowbird | 37.7 in / 36.3 in / 104% | 37.7 in / 36.3 in / 104% | 0.0 in / 0.0 in / 0 percentage points | Pass |
+| Ben Lomond Peak | 33.1 in / 33.3 in / 99% | 33.1 in / 33.3 in / 99% | 0.0 in / 0.0 in / 0 percentage points | Pass |
 
-The official AWDB source is:
-- Base data endpoint: `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data`
-- API documentation: `https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs`
-- Station metadata endpoint: `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations`
+Acceptance criteria: station SWE is within 0.1 inch of the AWDB reference, and the displayed percentage equals the nearest whole-percent result. Each station is assessed independently.
 
-The validation query uses station triplets `366:UT:SNTL,766:UT:SNTL,332:UT:SNTL`, element `WTEQ`, duration `DAILY`, begin and end date `2025-04-01`, `centralTendencyType=MEDIAN`, `returnFlags=true`, and `periodRef=END`.
+Brighton hand calculation: `(20.8 / 21.2) × 100 = 98.113...%`, or **98.11%**, displayed as **98%**.
 
-Calculate with unrounded values and round only SWE and percentage output as specified by the Calculations and Outputs sections.
+The AWDB sources are the [data endpoint](https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data), [station metadata endpoint](https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations), and [API documentation](https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs). The app's station-level SWE, median, and displayed percentage matched all three AWDB START references; the SWE tolerance (0.1 inch) and nearest-whole-percent criteria passed independently for each station. Calculations use unrounded values.
 
-Acceptance criteria:
-- SWE matches the AWDB reference within 0.1 inch.
-- Percent of median matches the displayed nearest whole-percent result.
-- Brighton, Snowbird, and Ben Lomond Peak must each pass independently.
-- The app's unweighted station average must not be compared directly with an NRCS basin-weighted statewide statistic.
+The previously tested `periodRef=END` values—Brighton 21.4/21.6 in at 99%, Snowbird 38.6/36.5 in at 106%, and Ben Lomond Peak 33.4/33.4 in at 100%—are retained only as historical context. They are no longer the validation baseline or acceptance criteria.
 
-Historical-date validation:
-- An observation must correspond to the exact selected date.
-- Do not substitute an earlier observation, later observation, or interpolated value.
-- For a missing exact-date observation, display the station as unavailable and exclude it from the statewide average.
+### Independent NRCS Utah report comparison
 
-Edge-case tests:
-- Missing observation: show unavailable and exclude it from marker classification and the statewide average.
-- Invalid quality flags: require `qcFlag=V` and `qaFlag=A`; otherwise show unavailable and exclude it.
-- Zero median SWE: show unavailable and exclude it because percent of median is undefined.
-- Stale observation: show unavailable and exclude it; a stale test fixture must fail the applicable observation-age or station-report-time rule rather than be converted to valid SWE.
+The [official Utah SNOTEL Snow/Precipitation Update Report for April 1, 2025](https://wcc.sc.egov.usda.gov/reports/UpdateReport.html?report=Utah&year=2025&month=4&day=1) labels its values provisional and says they are based on the first reading of the day (typically 00:00). The values also match AWDB HOURLY WTEQ at `2025-04-01 00:00` and DAILY WTEQ with `periodRef=START`; those AWDB records have `qcFlag=V` and `qaFlag=A`.
 
-Independent comparison against downloadable NRCS Utah Snow Survey reports is still pending. The app is not yet implemented, and validation has not passed.
+| Station | App SWE / median / % | Official report SWE / median / % | Difference (app minus report) | Comparison |
+|---|---|---|---|---|
+| Brighton | 20.8 in / 21.2 in / 98% | 20.8 in / 21.2 in / 98% | 0.0 in / 0.0 in / 0 percentage points | Pass |
+| Snowbird | 37.7 in / 36.3 in / 104% | 37.7 in / 36.3 in / 104% | 0.0 in / 0.0 in / 0 percentage points | Pass |
+| Ben Lomond Peak | 33.1 in / 33.3 in / 99% | 33.1 in / 33.3 in / 99% | 0.0 in / 0.0 in / 0 percentage points | Pass |
+
+The independent comparisons passed for all three specified stations using the START convention. The report is provisional and may be revised; these results apply to the retrieved April 1, 2025 report.
+
+### Edge-case and statewide calculation tests
+
+Controlled in-browser fixtures exercised the app's actual processing and rendering functions; these are Stage 4 test results, not a persistent automated test suite.
+
+| Test | Actual result | Outcome |
+|---|---|---|
+| Historical exact-date match | April 1 values are used; a fixture containing only a March 31 value for an April 1 selection is unavailable, with no SWE or percentage substituted | Pass |
+| Invalid quality flags | Historical `qcFlag=I` and `qaFlag=P` fixtures are unavailable for percentage calculations; current invalid QC is also excluded | Pass |
+| Zero median | Percent is unavailable and the station is excluded from valid counts | Pass |
+| Stale current observation | A 30-hour-old approved reading is labeled stale and has no percentage | Pass |
+| Raw and Provisional current readings | Real SWE remains separately displayable with Raw (`R`) or Provisional (`P`) status; percentage is unavailable and neither contributes to the valid count | Pass |
+| Unweighted statewide average | A fixture with valid percentages of 200% and 100%, plus two unavailable stations, displayed 150% and 2/4; only the two valid stations contributed | Pass |
+
+The live April 1 app summary displayed 71/141 valid stations and a 92% unweighted average after the START alignment. The earlier END run displayed 65/141 and 95%; this change reflects the aligned daily inputs, not a change to the averaging formula. The statewide summary was not compared with an NRCS basin-weighted statistic.
+
+Current-mode regression check on November 24, 2026: the API requests remained HOURLY WTEQ with `periodRef=END` plus DAILY median lookup with `periodRef=START`. The app displayed 140 numeric hourly readings (139 Raw, 1 Provisional, 1 station without a reading), 0/141 valid, and an unavailable average. Brighton remained 3.1 inches SWE with Raw QA, timestamp `2026-11-24 08:00` (AWDB UTC-08:00), and unavailable percent; its START-period daily median was 3.4 inches. Hourly retrieval, timestamp, timezone, freshness, and quality handling were unchanged.
+
+### Interaction and layout tests
+
+- Selecting Snowbird with keyboard focus and Enter selected the station, updated its details, and loaded its October 1-to-selected-date graph; both SWE series rendered.
+- The live April 1 browser run displayed the expected details for each validation station and loaded the station graph.
+- At 390px and 1440px viewport widths, the page had no horizontal overflow; the map/details layout stacked on mobile and used side-by-side columns on desktop.
+- The page reported no browser JavaScript errors during these checks.
+- A controlled stale-data case revealed that the summary called all numeric readings “recent,” including stale readings. The label was corrected to say “hourly SWE readings.” This wording-only change did not alter freshness checks, percentages, station classification, or statewide calculations.
+
+### Validation status and remaining limitations
+
+The three AWDB START reference comparisons, Brighton hand calculation, independent NRCS report comparisons, controlled edge-case tests, unweighted-average test, station selection, historical graphs, keyboard selection, current-mode regression check, and responsive-layout checks passed. The previous END values are historical context only. The report remains provisional; its values could change if revised upstream. Stage 4 results are documented for user review; Stages 5 and 6 have not begun.
 
 ## Out of Scope
 - Future snowfall and water-supply forecasting.
@@ -194,13 +218,15 @@ Build and review one stage at a time. Do not begin a later stage until the prece
 
 **What will be built:**
 - NRCS AWDB station metadata and observation integration.
-- Current mode uses recent hourly WTEQ observations and station `dataTimeZone` offsets for the 24-hour age check; historical mode uses exact-date daily WTEQ observations.
-- Current-mode daily median lookup uses only the official AWDB `median` field for the same calendar day and never reuses a prior year's actual SWE value.
+- Current mode uses recent hourly WTEQ observations and station `dataTimeZone` offsets for the 24-hour age check; this hourly path is unchanged by the historical period-reference convention.
+- Historical mode uses exact-date DAILY WTEQ with `periodRef=START`; historical water-year graph SWE and median series use the same START convention.
+- Current-mode daily median lookup uses `periodRef=START` and only the official AWDB `median` field for the same calendar day; it never reuses a prior year's actual SWE value.
 - Current/historical mode behavior, SWE and median calculations, statewide summary and coverage, station details, and selected water-year SWE and 1991-2020 median graphs.
 - Loading, unavailable, API failure, last-known-data, and retry states.
 
 **What to test or check:**
 - Check today's America/Denver date uses current mode and the 24-hour stale threshold; earlier dates use exact-date historical mode.
+- Verify historical station and graph requests use `periodRef=START`, and the current-mode DAILY median lookup uses START while HOURLY WTEQ remains unchanged.
 - Check current Raw (`R`) and Provisional (`P`) hourly SWE is displayed with its timestamp and unapproved status but remains unavailable for percent-of-median markers and the statewide average.
 - Check AWDB quality flags, missing values, zero medians, units, rounding, map classification, statewide numerator and denominator, graph labels, and missing-data gaps.
 
@@ -214,12 +240,13 @@ Build and review one stage at a time. Do not begin a later stage until the prece
 
 **What to test or check:**
 - Check the Brighton hand calculation and all three April 1, 2025 AWDB station references within the stated SWE and percentage criteria.
+- Compare the START-period app values with the official Utah report's first-reading values for all three stations; do not report a comparison as passed unless the app values meet the stated criteria.
 - Exercise missing observations, invalid quality flags, zero median SWE, stale current observations, and historical exact-date matching.
 - Compare station values only; do not compare the app's unweighted statewide average to an NRCS basin-weighted statistic.
 
 **Completion criteria:**
 - Required validation cases pass and results are documented before optional features begin.
-- Independent comparisons against downloadable NRCS Utah Snow Survey reports remain explicitly pending until those reports are obtained and compared; do not claim those comparisons passed before then.
+- Record the report's provisional status and first-reading convention. Keep the prior END results as historical context only; they are not the revised acceptance baseline.
 
 ### Stage 5: Station Comparison Mode
 

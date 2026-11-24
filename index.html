@@ -1094,7 +1094,7 @@
       return null;
     }
 
-    async function requestStationData(triplets, duration, beginDate, endDate, includeMedian) {
+    async function requestStationData(triplets, duration, beginDate, endDate, includeMedian, periodRef = "END") {
       const responses = [];
       for (const batch of chunk(triplets, 35)) {
         const url = new URL(`${AWDB_BASE}/data`);
@@ -1104,7 +1104,7 @@
         url.searchParams.set("beginDate", beginDate);
         url.searchParams.set("endDate", endDate);
         url.searchParams.set("returnFlags", "true");
-        url.searchParams.set("periodRef", "END");
+        url.searchParams.set("periodRef", periodRef);
         if (includeMedian) url.searchParams.set("centralTendencyType", "MEDIAN");
         responses.push(...await fetchJson(url.toString()));
       }
@@ -1153,7 +1153,7 @@
           if (!medianDate) throw new Error("No matching calendar date is available for the daily median lookup");
           const [hourlyResponse, medianResponse] = await Promise.all([
             requestStationData(triplets, "HOURLY", "-24", "0", false),
-            requestStationData(triplets, "DAILY", medianDate, medianDate, true)
+            requestStationData(triplets, "DAILY", medianDate, medianDate, true, "START")
           ]);
           if (sequence !== loadSequence) return;
           const dailyMedians = medianValuesFromDailyResponse(medianResponse, triplets, medianDate);
@@ -1161,7 +1161,7 @@
             processCurrentStation(findElementValues(hourlyResponse, station.id), station, dailyMedians.get(station.id) ?? null, medianDate)
           );
         } else {
-          const dailyResponse = await requestStationData(triplets, "DAILY", selectedDate, selectedDate, true);
+          const dailyResponse = await requestStationData(triplets, "DAILY", selectedDate, selectedDate, true, "START");
           if (sequence !== loadSequence) return;
           processed = stations.map((station) =>
             processHistoricalStation(findElementValues(dailyResponse, station.id), station, selectedDate)
@@ -1200,7 +1200,7 @@
       document.querySelector("#station-count").textContent = `${valid.length} / ${processed.length}`;
       document.querySelector("#summary-mode").textContent = currentMode ? "Current · hourly" : "Historical · daily";
       document.querySelector("#summary-note").textContent = currentMode
-        ? `${hourlyReadings} recent hourly SWE readings; ${unapprovedReadings} unapproved and excluded from calculations`
+        ? `${hourlyReadings} hourly SWE readings; ${unapprovedReadings} unapproved and excluded from calculations`
         : "NRCS daily observations for the exact selected date";
       document.querySelector("#map-status-text").textContent = `${processed.length} active Utah SNOTEL stations with SWE monitoring`;
 
@@ -1297,7 +1297,7 @@
       sourceUrl.searchParams.set("beginDate", station.observationTimestamp ? "-24" : dateInput.value);
       sourceUrl.searchParams.set("endDate", station.observationTimestamp ? "0" : dateInput.value);
       sourceUrl.searchParams.set("returnFlags", "true");
-      sourceUrl.searchParams.set("periodRef", "END");
+      sourceUrl.searchParams.set("periodRef", station.observationTimestamp ? "END" : "START");
       if (!station.observationTimestamp) sourceUrl.searchParams.set("centralTendencyType", "MEDIAN");
       document.querySelector("#station-source").href = sourceUrl.toString();
 
@@ -1337,7 +1337,7 @@
         url.searchParams.set("endDate", selectedDate);
         url.searchParams.set("centralTendencyType", "MEDIAN");
         url.searchParams.set("returnFlags", "true");
-        url.searchParams.set("periodRef", "END");
+        url.searchParams.set("periodRef", "START");
         const response = await fetchJson(url.toString());
         const values = findElementValues(response, station.id);
         const byDate = new Map(values.filter((value) => value?.date).map((value) => [value.date, value]));
