@@ -997,7 +997,7 @@
         <h1>Utah Snowpack Map</h1>
         <p class="subtitle">A station-by-station view of snow water equivalent compared with the 1991–2020 median.</p>
       </div>
-      <span class="mockup-tag">Stage 5 · Live NRCS data</span>
+      <span class="mockup-tag">Live NRCS data</span>
     </header>
 
     <div id="status-banner" class="status-banner" role="alert" aria-live="assertive">
@@ -1140,7 +1140,7 @@
               <div class="graph-wrap">
                 <svg id="swe-chart" class="graph-svg" viewBox="0 0 480 260" role="img" aria-labelledby="graph-title graph-desc">
                   <title id="graph-title">Water-year SWE graph</title>
-                  <desc id="graph-desc">Measured water-year SWE and 1991–2020 median SWE in inches.</desc>
+                  <desc id="graph-desc">No station selected. Select a station to display daily SWE and median measurements from NRCS AWDB.</desc>
                   <text class="graph-title" x="48" y="18">SWE (inches)</text>
                   <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
                   <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
@@ -1148,17 +1148,12 @@
                   <line class="graph-grid" x1="58" y1="185" x2="455" y2="185"></line>
                   <line class="graph-axis" x1="58" y1="40" x2="58" y2="203"></line>
                   <line class="graph-axis" x1="58" y1="203" x2="455" y2="203"></line>
-                  <text class="graph-text" x="48" y="54" text-anchor="end">—</text>
-                  <text class="graph-text" x="48" y="99" text-anchor="end">—</text>
-                  <text class="graph-text" x="48" y="144" text-anchor="end">—</text>
-                  <text class="graph-text" x="48" y="189" text-anchor="end">—</text>
                   <text class="graph-text" x="58" y="220" text-anchor="middle">Oct 1</text>
                   <text class="graph-text" x="190" y="220" text-anchor="middle">Jan 1</text>
                   <text class="graph-text" x="322" y="220" text-anchor="middle">Apr 1</text>
                   <text class="graph-text" x="455" y="220" text-anchor="middle">Selected date</text>
                   <text class="graph-title" x="256" y="248" text-anchor="middle">Date</text>
-                  <path class="graph-line-one" d="M62 175 C105 164 112 151 151 145 S211 119 246 125 S299 78 342 83 S405 57 451 63"></path>
-                  <path class="graph-line-two" d="M62 181 C105 169 118 159 151 151 S210 130 246 119 S298 97 342 89 S405 69 451 74"></path>
+                  <text class="graph-text" x="256" y="125" text-anchor="middle">Select a station to load NRCS observations.</text>
                 </svg>
                 <p class="graph-caption">
                   <span class="line-key"><span class="line-swatch" aria-hidden="true"></span>Selected water-year SWE</span>
@@ -1212,7 +1207,7 @@
       </aside>
     </section>
 
-    <p class="footnote">Stage 5 · Station comparison uses Utah SNOTEL data from the official NRCS AWDB REST API.</p>
+    <p class="footnote">Station comparison uses Utah SNOTEL data from the official NRCS AWDB REST API.</p>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>

@@ -146,7 +146,7 @@ Current-mode regression check on November 24, 2026: the API requests remained HO
 
 ### Validation status and remaining limitations
 
-The three AWDB START reference comparisons, Brighton hand calculation, independent NRCS report comparisons, controlled edge-case tests, unweighted-average test, station selection, historical graphs, keyboard selection, current-mode regression check, and responsive-layout checks passed. The previous END values are historical context only. The report remains provisional; its values could change if revised upstream. Stage 4 results are documented for user review; Stages 5 and 6 have not begun.
+The three AWDB START reference comparisons, Brighton hand calculation, independent NRCS report comparisons, controlled edge-case tests, unweighted-average test, station selection, historical graphs, keyboard selection, current-mode regression check, and responsive-layout checks passed. The previous END values are historical context only. The report remains provisional; its values could change if revised upstream. Stage 4 results are documented for user review; Stages 5 and 6 have since been implemented and are documented below, pending user review.
 
 ## Out of Scope
 - Future snowfall and water-supply forecasting.
@@ -259,7 +259,7 @@ Build and review one stage at a time. Do not begin a later stage until the prece
 **Completion criteria:**
 - One to three stations can be compared using the existing validated calculations, without changing required map or station behavior.
 
-**Status:** Implemented and browser-tested for user review. Stage 6 remains gated on approval of Stage 5.
+**Status:** Implemented and browser-tested for user review.
 
 ### Stage 6: Station Data-Quality Indicator
 

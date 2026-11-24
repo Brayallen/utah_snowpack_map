@@ -1161,3 +1161,104 @@ Stage 6's requested data-quality states and integration checks passed. The
 route-based synthetic fixture was unnecessary after the live missing-median
 case passed. No commit was made.
 performed.
+
+## Prompt 30 - Final Pre-publication Audit
+
+**Prompt:**
+Read AGENTS.md, spec.md, index.html, and prompts.md. Audit all six stages,
+placeholders, links/resources, JavaScript and network errors, HTTP/API/CORS and
+GitHub Pages compatibility, April 1, 2025 validation cases, graphs and both
+features, Data Quality visibility, responsive/keyboard/date behavior, personal
+identifiers, single-file architecture, and final specification contents.
+Report passed checks, problems, publishing risks, and remaining requirements.
+Do not make major changes or edit code without approval. Record this audit and
+do not commit or publish.
+
+**Agent Response / Findings:**
+- Read all four requested project files. All six stages are implemented in the
+  app and documented, including the three validation cases, Brighton hand
+  calculation, actual results, Features section, and stage-by-stage build plan.
+- Served the app over local HTTP. The page returned HTTP 200; live AWDB
+  metadata/current observations and historical data loaded in-browser. A valid
+  AWDB data GET returned HTTP 200 with `Access-Control-Allow-Origin: *`.
+  The bare data endpoint without required query parameters returned HTTP 400,
+  as expected; the official report redirected and resolved to HTTP 200.
+- The browser reported no JavaScript console errors, failed requests, or
+  unsuccessful resource responses during the HTTP audit. HTTPS Leaflet CDN,
+  official AWDB endpoints, OSM copyright, and Leaflet project links responded.
+- April 1, 2025 app results matched the documented values:
+  Brighton 20.8/21.2 inches, 98%; Snowbird 37.7/36.3 inches, 104%; Ben Lomond
+  Peak 33.1/33.3 inches, 99%. All three historical graph series loaded with
+  `periodRef=START`; the comparison view showed three rows, graph series, and
+  legend entries.
+- Selecting Brighton showed and keyboard-expanded the Data Quality panel with
+  Valid status, `qcFlag=V`, `qaFlag=A`, and the exact-date acceptance reason.
+  At current date 2026-11-24, the app loaded 140 hourly readings, all
+  unapproved, with 0/141 valid and the statewide average unavailable, as
+  expected for the returned flags.
+- Date selection set the max to today's America/Denver date. Keyboard station
+  selection, native details expansion, 390px mobile layout, and 1440px desktop
+  layout were checked; neither viewport had horizontal page overflow.
+- No personal name, NetID, or email identifier was found in index.html,
+  spec.md, or prompts.md. The application remains a single index.html with
+  Leaflet/CSS/JS and map tiles loaded over HTTPS; the repository has four
+  tracked top-level files, including its documentation.
+- Issues needing review: the initial unselected graph still renders two
+  hard-coded curves instead of a clearly empty/loading state; the header and
+  footer still identify the interface as “Stage 5” although Stage 6 is
+  implemented; and the Validation status paragraph says Stages 5 and 6 have
+  not begun, contradicting their implementation statuses.
+- Publishing risks: no GitHub Pages deployment has been tested. AWDB availability
+  and CORS remain dependent on NRCS service behavior; the public OSM tile service
+  is best-effort and subject to its usage policy. A direct curl tile probe was
+  denied, while the actual browser loaded Leaflet tiles without failed requests.
+  The independent report remains provisional and subject to revision.
+- No calculations or application code were changed. Small corrections to the
+  initial graph, stage labels, and stale specification sentence are awaiting
+  user approval.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 30 audit and results.
+
+**Result:**
+The live HTTP audit passed for API access, validation values, graphs, both
+features, accessibility interactions, and responsive layouts. The three
+identified content inconsistencies remain unmodified pending user approval.
+No commit or publication was made.
+
+### Prompt 30 Follow-up - Approved Audit Corrections
+
+**User Decision:**
+- Approved the focused corrections to the initial graph, visible stage labels,
+  and stale specification status.
+
+**Changes and Retests:**
+- Removed the two hard-coded initial SWE graph curves and placeholder y-axis
+  values. Before station selection, the graph now identifies itself as having
+  no selected station and asks the user to select one; no fabricated series is
+  shown.
+- Removed “Stage 5” from the live-data header and footer.
+- Updated the Validation status to acknowledge Stages 5 and 6 are implemented,
+  and removed the obsolete Stage 5 text that said Stage 6 remained gated.
+- Retested over local HTTP: the page loaded; current data returned 0/141 valid
+  with 140 hourly readings marked unapproved; the empty graph had zero data
+  paths before selection.
+- April 1, 2025 again matched all three references: Brighton 20.8/21.2 in,
+  98%; Snowbird 37.7/36.3 in, 104%; Ben Lomond Peak 33.1/33.3 in, 99%.
+  Historical graphs loaded two data paths each and source links used START.
+- Keyboard expansion of the Brighton Data Quality panel passed. Three-station
+  comparison showed three table rows, graph series, and legend entries.
+  At 390px and 1440px, page width matched viewport width.
+- No browser console errors, failed requests, or failed responses were observed.
+  `git diff --check` passed.
+
+**Files Changed:**
+- `index.html`: removed fabricated initial graph curves, clarified its empty
+  state, and removed stale visible stage labels.
+- `spec.md`: corrected the obsolete Stage 4 and Stage 5 status prose.
+- `prompts.md`: appended this audit follow-up.
+
+**Result:**
+The approved corrections passed the HTTP browser retests. No calculations,
+AWDB request behavior, or quality rules changed. The app remains unpublished
+and uncommitted; GitHub Pages deployment has not been tested.
