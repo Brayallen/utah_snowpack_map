@@ -259,6 +259,8 @@ Build and review one stage at a time. Do not begin a later stage until the prece
 **Completion criteria:**
 - One to three stations can be compared using the existing validated calculations, without changing required map or station behavior.
 
+**Status:** Implemented and browser-tested for user review. Stage 6 remains gated on approval of Stage 5.
+
 ### Stage 6: Station Data-Quality Indicator
 
 **What will be built:**

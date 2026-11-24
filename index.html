@@ -295,6 +295,40 @@
       font-size: 0.74rem;
     }
 
+    .comparison-controls {
+      display: grid;
+      gap: 5px;
+      margin: 11px 0;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fbfb;
+    }
+
+    .comparison-toggle {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 36px;
+      align-items: center;
+      gap: 9px;
+      color: var(--navy);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
+
+    .comparison-toggle input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--teal);
+    }
+
+    .comparison-help {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.73rem;
+    }
+
     .station-options {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -574,6 +608,139 @@
       border-color: var(--blue);
     }
 
+    .comparison-date {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .comparison-table-scroll {
+      max-width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .comparison-table {
+      width: 100%;
+      min-width: 650px;
+      border-collapse: collapse;
+      font-size: 0.76rem;
+    }
+
+    .comparison-table caption {
+      padding: 9px 11px;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 9px 10px;
+      border-top: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .comparison-table thead th {
+      border-top: 0;
+      background: #f0f5f6;
+      color: var(--navy);
+      font-size: 0.7rem;
+      white-space: nowrap;
+    }
+
+    .comparison-table td:first-child {
+      min-width: 130px;
+      font-weight: 700;
+    }
+
+    .comparison-table td:nth-child(5) {
+      min-width: 190px;
+      overflow-wrap: anywhere;
+    }
+
+    .comparison-remove {
+      min-height: 34px;
+      border: 1px solid #afc2c8;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      cursor: pointer;
+      padding: 5px 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .comparison-remove:hover {
+      border-color: var(--teal);
+      background: #f0f8f7;
+    }
+
+    .comparison-graph-heading {
+      margin: 18px 0 9px;
+      color: var(--navy);
+      font-size: 0.86rem;
+    }
+
+    .comparison-chart path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-width: 2.5;
+    }
+
+    .comparison-line-1 {
+      stroke: #087c78;
+    }
+
+    .comparison-line-2 {
+      stroke: #a64b13;
+      stroke-dasharray: 8 4;
+    }
+
+    .comparison-line-3 {
+      stroke: #59458e;
+      stroke-dasharray: 2 4;
+    }
+
+    .comparison-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px 15px;
+      margin: 8px 4px 2px;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .comparison-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .comparison-line-swatch {
+      flex: 0 0 20px;
+      width: 20px;
+      border-top: 3px solid #087c78;
+    }
+
+    .comparison-line-swatch.line-2 {
+      border-top-style: dashed;
+      border-top-color: #a64b13;
+    }
+
+    .comparison-line-swatch.line-3 {
+      border-top-style: dotted;
+      border-top-color: #59458e;
+    }
+
+    .single-station-views[hidden],
+    #comparison-panel[hidden] {
+      display: none;
+    }
+
     .footnote {
       margin: 17px 3px 0;
       color: var(--muted);
@@ -755,7 +922,7 @@
         <h1>Utah Snowpack Map</h1>
         <p class="subtitle">A station-by-station view of snow water equivalent compared with the 1991–2020 median.</p>
       </div>
-      <span class="mockup-tag">Stage 3 · Live NRCS data</span>
+      <span class="mockup-tag">Stage 5 · Live NRCS data</span>
     </header>
 
     <div id="status-banner" class="status-banner" role="alert" aria-live="assertive">
@@ -808,7 +975,14 @@
 
           <div class="station-list" aria-labelledby="station-list-heading">
             <h3 id="station-list-heading">Utah SNOTEL station list</h3>
-            <p class="station-list-help">Keyboard-accessible alternative to selecting map markers.</p>
+            <p id="station-list-help" class="station-list-help">Keyboard-accessible alternative to selecting map markers.</p>
+            <div class="comparison-controls">
+              <label class="comparison-toggle" for="comparison-mode">
+                <input id="comparison-mode" type="checkbox" aria-controls="comparison-panel">
+                <span>Station Comparison Mode</span>
+              </label>
+              <p id="comparison-help" class="comparison-help">Turn on to select up to three stations for side-by-side comparison.</p>
+            </div>
             <ul id="station-options" class="station-options"></ul>
             <p id="selection-status" class="selection-status" role="status" aria-live="polite">No station selected.</p>
           </div>
@@ -826,85 +1000,127 @@
       </section>
 
       <aside class="details-stack" aria-label="Station details and SWE graph">
-        <section class="panel" aria-labelledby="station-heading">
-          <div class="panel-header">
-            <div>
-              <h2 id="station-heading">Station details</h2>
-              <p>Updated when a station marker or station-list button is selected</p>
-            </div>
-            <span class="sample-tag">Live NRCS</span>
-          </div>
-          <div class="panel-body">
-            <div id="station-empty-state" class="empty-state">
-              <div class="empty-icon" aria-hidden="true">i</div>
-              <h3>No station selected</h3>
-              <p>Select a station marker or use the keyboard-accessible station list.</p>
-            </div>
-            <div id="sample-station" class="sample-station" aria-label="Selected station values" hidden>
-              <div class="sample-station-heading">
-                <h3 id="station-name">Station name</h3>
-                <span class="sample-tag">AWDB</span>
+        <div id="single-station-views" class="single-station-views details-stack">
+          <section class="panel" aria-labelledby="station-heading">
+            <div class="panel-header">
+              <div>
+                <h2 id="station-heading">Station details</h2>
+                <p>Updated when a station marker or station-list button is selected</p>
               </div>
-              <div class="data-grid">
-                <div class="data-field"><span>Station identifier</span><strong id="station-id">Loading</strong></div>
-                <div class="data-field"><span>Elevation</span><strong id="station-elevation">Loading</strong></div>
-                <div class="data-field"><span>Observation date</span><strong id="station-date">Loading</strong></div>
-                <div class="data-field"><span>Observation timestamp / age</span><strong id="station-timestamp">Loading</strong></div>
-                <div class="data-field"><span>SWE</span><strong id="station-swe">Loading</strong></div>
-                <div class="data-field"><span>1991–2020 median SWE</span><strong id="station-median">Loading</strong></div>
-                <div class="data-field"><span>Median lookup</span><strong id="station-median-source">Loading</strong></div>
-                <div class="data-field"><span>Percent of median</span><strong id="station-percent">Loading</strong></div>
-                <div class="data-field"><span>Data status</span><strong id="station-availability">Loading</strong></div>
-                <div class="data-field"><span>Source</span><strong><a id="station-source" href="https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs" target="_blank" rel="noopener noreferrer">NRCS AWDB REST API</a></strong></div>
+              <span class="sample-tag">Live NRCS</span>
+            </div>
+            <div class="panel-body">
+              <div id="station-empty-state" class="empty-state">
+                <div class="empty-icon" aria-hidden="true">i</div>
+                <h3>No station selected</h3>
+                <p>Select a station marker or use the keyboard-accessible station list.</p>
+              </div>
+              <div id="sample-station" class="sample-station" aria-label="Selected station values" hidden>
+                <div class="sample-station-heading">
+                  <h3 id="station-name">Station name</h3>
+                  <span class="sample-tag">AWDB</span>
+                </div>
+                <div class="data-grid">
+                  <div class="data-field"><span>Station identifier</span><strong id="station-id">Loading</strong></div>
+                  <div class="data-field"><span>Elevation</span><strong id="station-elevation">Loading</strong></div>
+                  <div class="data-field"><span>Observation date</span><strong id="station-date">Loading</strong></div>
+                  <div class="data-field"><span>Observation timestamp / age</span><strong id="station-timestamp">Loading</strong></div>
+                  <div class="data-field"><span>SWE</span><strong id="station-swe">Loading</strong></div>
+                  <div class="data-field"><span>1991–2020 median SWE</span><strong id="station-median">Loading</strong></div>
+                  <div class="data-field"><span>Median lookup</span><strong id="station-median-source">Loading</strong></div>
+                  <div class="data-field"><span>Percent of median</span><strong id="station-percent">Loading</strong></div>
+                  <div class="data-field"><span>Data status</span><strong id="station-availability">Loading</strong></div>
+                  <div class="data-field"><span>Source</span><strong><a id="station-source" href="https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs" target="_blank" rel="noopener noreferrer">NRCS AWDB REST API</a></strong></div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section class="panel" aria-labelledby="graph-heading">
+          <section class="panel" aria-labelledby="graph-heading">
+            <div class="panel-header">
+              <div>
+                <h2 id="graph-heading">Water-year SWE</h2>
+                <p>SWE (inches) · October 1 through selected date</p>
+              </div>
+              <span class="sample-tag">NRCS</span>
+            </div>
+            <div class="panel-body">
+              <div class="graph-wrap">
+                <svg id="swe-chart" class="graph-svg" viewBox="0 0 480 260" role="img" aria-labelledby="graph-title graph-desc">
+                  <title id="graph-title">Water-year SWE graph</title>
+                  <desc id="graph-desc">Measured water-year SWE and 1991–2020 median SWE in inches.</desc>
+                  <text class="graph-title" x="48" y="18">SWE (inches)</text>
+                  <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
+                  <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
+                  <line class="graph-grid" x1="58" y1="140" x2="455" y2="140"></line>
+                  <line class="graph-grid" x1="58" y1="185" x2="455" y2="185"></line>
+                  <line class="graph-axis" x1="58" y1="40" x2="58" y2="203"></line>
+                  <line class="graph-axis" x1="58" y1="203" x2="455" y2="203"></line>
+                  <text class="graph-text" x="48" y="54" text-anchor="end">—</text>
+                  <text class="graph-text" x="48" y="99" text-anchor="end">—</text>
+                  <text class="graph-text" x="48" y="144" text-anchor="end">—</text>
+                  <text class="graph-text" x="48" y="189" text-anchor="end">—</text>
+                  <text class="graph-text" x="58" y="220" text-anchor="middle">Oct 1</text>
+                  <text class="graph-text" x="190" y="220" text-anchor="middle">Jan 1</text>
+                  <text class="graph-text" x="322" y="220" text-anchor="middle">Apr 1</text>
+                  <text class="graph-text" x="455" y="220" text-anchor="middle">Selected date</text>
+                  <text class="graph-title" x="256" y="248" text-anchor="middle">Date</text>
+                  <path class="graph-line-one" d="M62 175 C105 164 112 151 151 145 S211 119 246 125 S299 78 342 83 S405 57 451 63"></path>
+                  <path class="graph-line-two" d="M62 181 C105 169 118 159 151 151 S210 130 246 119 S298 97 342 89 S405 69 451 74"></path>
+                </svg>
+                <p class="graph-caption">
+                  <span class="line-key"><span class="line-swatch" aria-hidden="true"></span>Selected water-year SWE</span>
+                  <span class="line-key"><span class="line-swatch median" aria-hidden="true"></span>1991–2020 median SWE</span>
+                </p>
+              </div>
+              <p id="graph-status" class="map-note"><strong>Graph status:</strong> select a station to load NRCS observations.</p>
+            </div>
+          </section>
+        </div>
+
+        <section id="comparison-panel" class="panel" aria-labelledby="comparison-heading" hidden>
           <div class="panel-header">
             <div>
-              <h2 id="graph-heading">Water-year SWE</h2>
-              <p>SWE (inches) · October 1 through selected date</p>
+              <h2 id="comparison-heading">Station comparison</h2>
+              <p>Compare selected stations for the active date.</p>
             </div>
-            <span class="sample-tag">NRCS</span>
+            <span id="comparison-count" class="sample-tag">0 of 3 selected</span>
           </div>
           <div class="panel-body">
-            <div class="graph-wrap">
-              <svg id="swe-chart" class="graph-svg" viewBox="0 0 480 260" role="img" aria-labelledby="graph-title graph-desc">
-                <title id="graph-title">Water-year SWE graph</title>
-                <desc id="graph-desc">Measured water-year SWE and 1991–2020 median SWE in inches.</desc>
-                <text class="graph-title" x="48" y="18">SWE (inches)</text>
-                <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
-                <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
-                <line class="graph-grid" x1="58" y1="140" x2="455" y2="140"></line>
-                <line class="graph-grid" x1="58" y1="185" x2="455" y2="185"></line>
-                <line class="graph-axis" x1="58" y1="40" x2="58" y2="203"></line>
-                <line class="graph-axis" x1="58" y1="203" x2="455" y2="203"></line>
-                <text class="graph-text" x="48" y="54" text-anchor="end">—</text>
-                <text class="graph-text" x="48" y="99" text-anchor="end">—</text>
-                <text class="graph-text" x="48" y="144" text-anchor="end">—</text>
-                <text class="graph-text" x="48" y="189" text-anchor="end">—</text>
-                <text class="graph-text" x="58" y="220" text-anchor="middle">Oct 1</text>
-                <text class="graph-text" x="190" y="220" text-anchor="middle">Jan 1</text>
-                <text class="graph-text" x="322" y="220" text-anchor="middle">Apr 1</text>
-                <text class="graph-text" x="455" y="220" text-anchor="middle">Selected date</text>
-                <text class="graph-title" x="256" y="248" text-anchor="middle">Date</text>
-                <path class="graph-line-one" d="M62 175 C105 164 112 151 151 145 S211 119 246 125 S299 78 342 83 S405 57 451 63"></path>
-                <path class="graph-line-two" d="M62 181 C105 169 118 159 151 151 S210 130 246 119 S298 97 342 89 S405 69 451 74"></path>
-              </svg>
-              <p class="graph-caption">
-                <span class="line-key"><span class="line-swatch" aria-hidden="true"></span>Selected water-year SWE</span>
-                <span class="line-key"><span class="line-swatch median" aria-hidden="true"></span>1991–2020 median SWE</span>
-              </p>
+            <p id="comparison-date" class="comparison-date">Select stations from the map or station list.</p>
+            <div class="comparison-table-scroll" role="region" aria-label="Station comparison table; scroll horizontally on narrow screens" tabindex="0">
+              <table class="comparison-table">
+                <caption>Selected stations · SWE and median in inches</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Station</th>
+                    <th scope="col">SWE</th>
+                    <th scope="col">Median</th>
+                    <th scope="col">Percent</th>
+                    <th scope="col">Data availability</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="comparison-rows">
+                  <tr><td colspan="6">No stations selected.</td></tr>
+                </tbody>
+              </table>
             </div>
-            <p id="graph-status" class="map-note"><strong>Graph status:</strong> select a station to load NRCS observations.</p>
+            <h3 class="comparison-graph-heading">Shared water-year SWE measurements</h3>
+            <div class="graph-wrap">
+              <svg id="comparison-chart" class="graph-svg comparison-chart" viewBox="0 0 480 260" role="img" aria-labelledby="comparison-graph-title comparison-graph-desc">
+                <title id="comparison-graph-title">Shared water-year SWE comparison</title>
+                <desc id="comparison-graph-desc">Select stations with available observations to display their water-year SWE series.</desc>
+              </svg>
+              <div id="comparison-legend" class="comparison-legend" aria-label="Comparison graph legend"></div>
+            </div>
+            <p id="comparison-graph-status" class="map-note" role="status" aria-live="polite">Select up to three stations to load comparison data.</p>
           </div>
         </section>
       </aside>
     </section>
 
-    <p class="footnote">Stage 3 · Utah SNOTEL metadata and WTEQ observations retrieved from the official NRCS AWDB REST API.</p>
+    <p class="footnote">Stage 5 · Station comparison uses Utah SNOTEL data from the official NRCS AWDB REST API.</p>
   </main>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
@@ -948,12 +1164,23 @@
     const statusBannerText = document.querySelector("#status-banner-text");
     const retryButton = document.querySelector("#retry-button");
     const loadingRow = document.querySelector("#loading-row");
+    const comparisonToggle = document.querySelector("#comparison-mode");
+    const comparisonPanel = document.querySelector("#comparison-panel");
+    const singleStationViews = document.querySelector("#single-station-views");
+    const comparisonRows = document.querySelector("#comparison-rows");
+    const comparisonChart = document.querySelector("#comparison-chart");
+    const comparisonLegend = document.querySelector("#comparison-legend");
+    const comparisonGraphStatus = document.querySelector("#comparison-graph-status");
     const AWDB_BASE = "https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1";
 
     let stations = [];
     let selectedStationId = null;
+    let comparisonMode = false;
+    let comparisonStationIds = new Set();
+    let currentProcessedStations = [];
     let lastSuccessfulResult = null;
     let loadSequence = 0;
+    let comparisonGraphSequence = 0;
 
     function markerColor(percent) {
       if (percent === null || !Number.isFinite(percent)) return markerColors.unavailable;
@@ -1183,7 +1410,25 @@
       }
     }
 
+    function syncStationSelectionButtons() {
+      for (const [stationId, button] of stationButtons) {
+        const isPressed = comparisonMode
+          ? comparisonStationIds.has(stationId)
+          : stationId === selectedStationId;
+        button.setAttribute("aria-pressed", String(isPressed));
+      }
+    }
+
+    function handleStationActivation(station) {
+      if (comparisonMode) {
+        toggleComparisonStation(station);
+      } else {
+        selectStation(station);
+      }
+    }
+
     function renderStations(processed) {
+      currentProcessedStations = processed;
       markerLayer.clearLayers();
       stationOptions.replaceChildren();
       stationButtons.clear();
@@ -1193,7 +1438,7 @@
       const average = valid.length
         ? valid.reduce((sum, station) => sum + station.percent, 0) / valid.length
         : null;
-      const currentMode = dateInput.value === utahDate;
+      const currentMode = lastSuccessfulResult?.currentMode ?? (dateInput.value === utahDate);
       const hourlyReadings = processed.filter((station) => station.swe !== null && Number.isFinite(station.swe)).length;
       const unapprovedReadings = processed.filter((station) => station.qaFlag && station.qaFlag !== "A" && station.swe !== null).length;
       document.querySelector("#statewide-average").textContent = average === null ? "Unavailable" : `${Math.round(average)}%`;
@@ -1225,7 +1470,7 @@
         popupStatus.textContent = `${percentLabel} — ${station.status}`;
         popup.append(popupName, popupStatus);
         marker.bindPopup(popup);
-        marker.on("click", () => selectStation(station));
+        marker.on("click", () => handleStationActivation(station));
         stationMarkers.set(station.id, marker);
 
         const item = document.createElement("li");
@@ -1246,7 +1491,7 @@
         copy.append(name, description);
         button.append(swatch, copy);
         button.addEventListener("click", () => {
-          selectStation(station);
+          handleStationActivation(station);
           map.panTo([station.lat, station.lng]);
           stationMarkers.get(station.id).openPopup();
         });
@@ -1255,7 +1500,10 @@
         stationButtons.set(station.id, button);
       }
 
-      if (selectedStationId) {
+      syncStationSelectionButtons();
+      if (comparisonMode) {
+        renderComparison(processed);
+      } else if (selectedStationId) {
         const selected = processed.find((station) => station.id === selectedStationId);
         if (selected) selectStation(selected);
       }
@@ -1289,7 +1537,7 @@
       document.querySelector("#station-availability").textContent = station.status;
       stationEmptyState.hidden = true;
       stationDetails.hidden = false;
-      stationStatus.textContent = `${station.name} selected. ${station.status}.`;
+      if (!comparisonMode) stationStatus.textContent = `${station.name} selected. ${station.status}.`;
       const sourceUrl = new URL(`${AWDB_BASE}/data`);
       sourceUrl.searchParams.set("stationTriplets", station.id);
       sourceUrl.searchParams.set("elements", "WTEQ");
@@ -1301,10 +1549,251 @@
       if (!station.observationTimestamp) sourceUrl.searchParams.set("centralTendencyType", "MEDIAN");
       document.querySelector("#station-source").href = sourceUrl.toString();
 
-      for (const [stationId, button] of stationButtons) {
-        button.setAttribute("aria-pressed", String(stationId === station.id));
-      }
+      syncStationSelectionButtons();
       await loadStationGraph(station);
+    }
+
+    function toggleComparisonStation(station) {
+      if (comparisonStationIds.has(station.id)) {
+        comparisonStationIds.delete(station.id);
+      } else if (comparisonStationIds.size >= 3) {
+        stationStatus.textContent = "Comparison is limited to three stations. Remove a selected station before adding another.";
+        return;
+      } else {
+        comparisonStationIds.add(station.id);
+      }
+
+      syncStationSelectionButtons();
+      renderComparison(currentProcessedStations);
+    }
+
+    function setComparisonMode(enabled) {
+      comparisonMode = enabled;
+      comparisonToggle.checked = enabled;
+      comparisonPanel.hidden = !enabled;
+      singleStationViews.hidden = enabled;
+      document.querySelector("#station-list-help").textContent = enabled
+        ? "Select up to three stations from the map or this keyboard-accessible list. Select a chosen station again or use Remove to remove it."
+        : "Keyboard-accessible alternative to selecting map markers.";
+      document.querySelector("#comparison-help").textContent = enabled
+        ? "Select up to three stations. Unavailable measurements stay in the table; their unavailable graph series are omitted."
+        : "Turn on to select up to three stations for side-by-side comparison.";
+
+      syncStationSelectionButtons();
+      if (enabled) {
+        renderComparison(currentProcessedStations);
+      } else {
+        comparisonGraphSequence += 1;
+        const selected = currentProcessedStations.find((station) => station.id === selectedStationId);
+        stationStatus.textContent = selected
+          ? `${selected.name} selected. ${selected.status}.`
+          : "No station selected.";
+        if (selected) selectStation(selected);
+      }
+    }
+
+    function comparisonValue(value, unit = "") {
+      return value !== null && value !== undefined && Number.isFinite(Number(value))
+        ? `${Number(value).toFixed(1)}${unit}`
+        : "Unavailable";
+    }
+
+    function comparisonPercent(value) {
+      return value !== null && value !== undefined && Number.isFinite(Number(value))
+        ? `${Math.round(Number(value))}%`
+        : "Unavailable";
+    }
+
+    function renderComparison(processed) {
+      const selectedDate = lastSuccessfulResult?.selectedDate ?? dateInput.value;
+      const currentMode = lastSuccessfulResult?.currentMode ?? (selectedDate === utahDate);
+      const selectedStations = [...comparisonStationIds]
+        .map((stationId) => processed.find((station) => station.id === stationId))
+        .filter(Boolean);
+
+      document.querySelector("#comparison-count").textContent = `${selectedStations.length} of 3 selected`;
+      document.querySelector("#comparison-date").textContent =
+        `${currentMode ? "Current hourly mode" : "Historical daily mode"} · ${selectedDate}`;
+      stationStatus.textContent = selectedStations.length
+        ? `${selectedStations.length} of 3 stations selected for comparison.`
+        : "Comparison mode active. Select up to three stations from the map or station list.";
+      comparisonRows.replaceChildren();
+
+      if (!selectedStations.length) {
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        cell.colSpan = 6;
+        cell.textContent = "No stations selected.";
+        row.append(cell);
+        comparisonRows.append(row);
+      } else {
+        for (const station of selectedStations) {
+          const row = document.createElement("tr");
+          const nameCell = document.createElement("td");
+          nameCell.textContent = station.name;
+          const sweCell = document.createElement("td");
+          sweCell.textContent = comparisonValue(station.swe, " in");
+          const medianCell = document.createElement("td");
+          medianCell.textContent = comparisonValue(station.median, " in");
+          const percentCell = document.createElement("td");
+          percentCell.textContent = comparisonPercent(station.percent);
+          const statusCell = document.createElement("td");
+          statusCell.textContent = station.status;
+          const actionCell = document.createElement("td");
+          const removeButton = document.createElement("button");
+          removeButton.className = "comparison-remove";
+          removeButton.type = "button";
+          removeButton.textContent = "Remove";
+          removeButton.setAttribute("aria-label", `Remove ${station.name} from comparison`);
+          removeButton.addEventListener("click", () => {
+            comparisonStationIds.delete(station.id);
+            syncStationSelectionButtons();
+            renderComparison(currentProcessedStations);
+          });
+          actionCell.append(removeButton);
+          row.append(nameCell, sweCell, medianCell, percentCell, statusCell, actionCell);
+          comparisonRows.append(row);
+        }
+      }
+
+      loadComparisonGraph(selectedStations, selectedDate, currentMode);
+    }
+
+    function comparisonGraphEligibility(station, currentMode) {
+      if (station.swe === null || !Number.isFinite(Number(station.swe))) {
+        return `omitted: ${station.status}`;
+      }
+      if (station.qcFlag !== "V" || station.qaFlag !== "A") {
+        return `omitted: quality checks failed (${station.status})`;
+      }
+      if (currentMode) {
+        if (!Number.isFinite(station.ageHours) || station.ageHours < 0 || station.ageHours > 24) {
+          return `omitted: current observation is unavailable or stale (${station.status})`;
+        }
+      }
+      return null;
+    }
+
+    function comparisonDates(startDate, selectedDate) {
+      const dates = [];
+      for (let cursor = new Date(`${startDate}T12:00:00`); cursor <= new Date(`${selectedDate}T12:00:00`); cursor.setDate(cursor.getDate() + 1)) {
+        const year = cursor.getFullYear();
+        const month = String(cursor.getMonth() + 1).padStart(2, "0");
+        const day = String(cursor.getDate()).padStart(2, "0");
+        dates.push(`${year}-${month}-${day}`);
+      }
+      return dates;
+    }
+
+    async function fetchComparisonSeries(station, dates, startDate, selectedDate) {
+      const response = await requestStationData([station.id], "DAILY", startDate, selectedDate, true, "START");
+      const values = findElementValues(response, station.id);
+      const valuesByDate = new Map(values.filter((value) => value?.date).map((value) => [value.date, value]));
+      const sweValues = dates.map((date) => {
+        const value = valuesByDate.get(date);
+        if (!value || value.qcFlag !== "V" || value.qaFlag !== "A" || value.value === null || value.value === undefined) return null;
+        const swe = Number(value.value);
+        return Number.isFinite(swe) ? swe : null;
+      });
+
+      return sweValues.some((value) => value !== null)
+        ? { station, sweValues }
+        : null;
+    }
+
+    function renderComparisonChartFrame(series, startDate, selectedDate) {
+      const allValues = series.flatMap((item) => item.sweValues).filter(Number.isFinite);
+      const maximum = allValues.length ? Math.max(...allValues, 1) : 1;
+      const yMax = Math.ceil(maximum / 10) * 10;
+      const yForValue = (value) => 203 - (value / yMax) * 163;
+      const paths = series.map((item) => {
+        const colorIndex = [...comparisonStationIds].indexOf(item.station.id) + 1;
+        return `<path class="comparison-line-${colorIndex}" d="${pathFromValues(item.sweValues, yForValue)}"></path>`;
+      }).join("");
+
+      comparisonChart.innerHTML = `
+        <title id="comparison-graph-title">Shared water-year SWE comparison</title>
+        <desc id="comparison-graph-desc">Approved daily SWE observations for selected stations from ${startDate} through ${selectedDate}. Missing observations appear as gaps.</desc>
+        <text class="graph-title" x="48" y="18">SWE (inches)</text>
+        <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
+        <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
+        <line class="graph-grid" x1="58" y1="140" x2="455" y2="140"></line>
+        <line class="graph-grid" x1="58" y1="185" x2="455" y2="185"></line>
+        <line class="graph-axis" x1="58" y1="40" x2="58" y2="203"></line>
+        <line class="graph-axis" x1="58" y1="203" x2="455" y2="203"></line>
+        <text class="graph-text" x="48" y="54" text-anchor="end">${yMax}</text>
+        <text class="graph-text" x="48" y="99" text-anchor="end">${Math.round(yMax * 0.75)}</text>
+        <text class="graph-text" x="48" y="144" text-anchor="end">${Math.round(yMax * 0.5)}</text>
+        <text class="graph-text" x="48" y="189" text-anchor="end">${Math.round(yMax * 0.25)}</text>
+        <text class="graph-text" x="58" y="220" text-anchor="middle">${startDate}</text>
+        <text class="graph-text" x="455" y="220" text-anchor="middle">${selectedDate}</text>
+        <text class="graph-title" x="256" y="248" text-anchor="middle">Date</text>
+        ${paths}
+        ${series.length ? "" : '<text class="graph-text" x="256" y="126" text-anchor="middle">No valid SWE series available</text>'}
+      `;
+
+      comparisonLegend.replaceChildren();
+      for (const item of series) {
+        const colorIndex = [...comparisonStationIds].indexOf(item.station.id) + 1;
+        const legendItem = document.createElement("span");
+        legendItem.className = "comparison-legend-item";
+        const swatch = document.createElement("span");
+        swatch.className = `comparison-line-swatch line-${colorIndex}`;
+        swatch.setAttribute("aria-hidden", "true");
+        const label = document.createElement("span");
+        label.textContent = item.station.name;
+        legendItem.append(swatch, label);
+        comparisonLegend.append(legendItem);
+      }
+    }
+
+    async function loadComparisonGraph(selectedStations, selectedDate, currentMode) {
+      const sequence = ++comparisonGraphSequence;
+      const startDate = waterYearStart(selectedDate);
+      const dates = comparisonDates(startDate, selectedDate);
+      const eligible = [];
+      const omitted = [];
+
+      for (const station of selectedStations) {
+        const reason = comparisonGraphEligibility(station, currentMode);
+        if (reason) omitted.push(`${station.name} ${reason}`);
+        else eligible.push(station);
+      }
+
+      comparisonLegend.replaceChildren();
+      comparisonGraphStatus.textContent = selectedStations.length
+        ? "Loading shared NRCS water-year observations…"
+        : "Select up to three stations to load comparison data.";
+      renderComparisonChartFrame([], startDate, selectedDate);
+      if (!eligible.length) {
+        comparisonGraphStatus.textContent = omitted.length
+          ? `No graph series available. ${omitted.join(". ")}.`
+          : "Select up to three stations to load comparison data.";
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        eligible.map((station) => fetchComparisonSeries(station, dates, startDate, selectedDate))
+      );
+      if (sequence !== comparisonGraphSequence || !comparisonMode) return;
+
+      const series = [];
+      for (let index = 0; index < results.length; index += 1) {
+        const result = results[index];
+        const station = eligible[index];
+        if (result.status === "rejected") {
+          omitted.push(`${station.name} graph unavailable: ${result.reason?.message ?? "NRCS request failed"}`);
+        } else if (!result.value) {
+          omitted.push(`${station.name} omitted: no approved SWE observations are available in this water year`);
+        } else {
+          series.push(result.value);
+        }
+      }
+
+      renderComparisonChartFrame(series, startDate, selectedDate);
+      comparisonGraphStatus.textContent = series.length
+        ? `Showing ${series.length} approved station SWE series.${omitted.length ? ` ${omitted.join(". ")}.` : ""}`
+        : `No graph series available. ${omitted.join(". ")}`;
     }
 
     function pathFromValues(values, yForValue) {
@@ -1392,6 +1881,7 @@
       }
     }
 
+    comparisonToggle.addEventListener("change", () => setComparisonMode(comparisonToggle.checked));
     retryButton.addEventListener("click", loadData);
     let dateTimer;
     dateInput.addEventListener("change", () => {

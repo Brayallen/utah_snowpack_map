@@ -1016,4 +1016,81 @@ add custom features, begin Stage 5, or commit.
 The three AWDB START and official report comparisons matched exactly in the
 live app. The requested Stage 4 alignment checks passed; the report's
 provisional status remains a limitation. No Stage 5 work or commit was
+
+## Prompt 28 - Build Stage 5 Station Comparison Mode
+
+**Prompt:**
+Implement only Stage 5 in index.html: add an accessible Station Comparison Mode
+toggle, select up to three SNOTEL stations, show their SWE, median, percent,
+and data availability in a table, and overlay their water-year SWE series on
+a shared graph with a clear legend. Prevent a fourth selection, allow removals,
+keep unavailable stations in the table but omit unavailable graph series, and
+preserve normal single-station mode. Reuse the validated AWDB data and rules,
+keep the START historical convention and current hourly behavior unchanged,
+do not build Stage 6, update prompts.md, test desktop/mobile and requested
+selection cases, and do not commit.
+
+**Agent Response / Changes:**
+- Added a clearly labeled, keyboard-operable Station Comparison Mode checkbox.
+  Map markers and the accessible station list can add or remove stations; the
+  app rejects a fourth station with a live status message. Each table row has
+  an accessible Remove button.
+- Added a responsive comparison table with station, SWE, median SWE, percent
+  of median, availability explanation, and removal action.
+- Added a shared water-year SWE graph. It uses daily AWDB WTEQ with
+  `periodRef=START`, approved QC/QA observations, readable axes, gaps for
+  missing records, station-specific colors and line styles, and a text legend.
+  A station whose selected-date observation fails the applicable date, quality,
+  or current freshness rules remains in the table but has its graph series
+  omitted with an explanation.
+- Comparison mode reuses already processed SWE, median, percent, and status
+  values; no calculation formula or current-mode hourly request was changed.
+  Turning the mode off restores the prior single-station panel and selection.
+  Comparison selections are retained if the user later turns the mode back on.
+- Added responsive horizontal scrolling for the comparison table on narrow
+  screens, semantic table headers/caption, a labeled scroll region, keyboard
+  controls, and visible focus styling.
+- Corrected the statewide mode label during API failures to reflect the
+  last-successfully-loaded dataset, rather than the newly requested date. The
+  existing last-known-data warning and Retry behavior remain in place.
+- Updated the Stage 5 status in spec.md and the app's stage labels. Stage 6 was
+  not started.
+
+**Test Results:**
+- Comparing one, two, and three stations passed: table row counts and shared
+  graph line counts were 1/1, 2/2, and 3/3.
+- April 1, 2025 comparison values matched the approved Stage 4 references:
+  Brighton 20.8/21.2 in, 98%; Snowbird 37.7/36.3 in, 104%; Ben Lomond Peak
+  33.1/33.3 in, 99%.
+- Attempting a fourth station left the count at three and announced the limit.
+  Removing a station reduced the comparison and graph series as expected.
+- Clarkston Mountain's exact-date-missing record remained in the table with
+  SWE, median, and percentage unavailable; its graph series was omitted while
+  the two valid series remained. An invalid-QC station was also retained with
+  its quality explanation and omitted from the graph.
+- Current-mode regression showed Brighton's Raw reading (3.1 in SWE, 3.4 in
+  median, percent unavailable) with the Raw QA explanation and no graph line.
+  Raw/Provisional readings remain excluded from accepted graph series.
+- Switching between normal and comparison modes restored Brighton's normal
+  details and graph without changing its values.
+- At 390px, the page had no horizontal overflow and the 650px comparison table
+  scrolled within its 326px viewport. At 1440px, map and comparison panels
+  remained side by side with no page overflow.
+- A transient NRCS fetch failure preserved and clearly labeled last-known data;
+  Retry succeeded and the historical comparison loaded. A forced-failure
+  browser check confirmed the displayed mode matched the last-loaded data.
+- Browser page-error checks were clear and `git diff --check` passed. Node.js
+  was unavailable for a standalone syntax check; the updated inline script
+  loaded and executed in the browser.
+
+**Files Changed:**
+- `index.html`: implemented Stage 5 comparison UI, station selection/removal,
+  table, shared graph, and mode display correction.
+- `spec.md`: recorded Stage 5 as implemented and awaiting user review.
+- `prompts.md`: appended this Prompt 28 entry and test results.
+
+**Result:**
+Stage 5 comparison behavior and requested browser checks passed. The transient
+NRCS failure recovered with Retry. Stage 6 remains unstarted; no commit was
+made.
 performed.
