@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f7f8">
+  <title>Utah Snowpack Map — Layout Mockup</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #16323d;
+      --muted: #59717a;
+      --line: #d7e2e5;
+      --paper: #ffffff;
+      --canvas: #f3f7f8;
+      --navy: #143b4a;
+      --teal: #137a78;
+      --ice: #e8f2f4;
+      --red: #b94a48;
+      --orange: #d88735;
+      --green: #398269;
+      --blue: #438bb4;
+      --deep-blue: #315a8c;
+      --unavailable: #7c898e;
+      --focus: #086c9a;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--canvas);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--focus);
+      outline-offset: 3px;
+    }
+
+    .page {
+      width: min(1480px, 100%);
+      margin: 0 auto;
+      padding: 28px clamp(16px, 3vw, 44px) 40px;
+    }
+
+    .masthead {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--teal);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+      color: var(--navy);
+      font-size: clamp(1.7rem, 3vw, 2.45rem);
+      letter-spacing: -0.035em;
+      line-height: 1.12;
+    }
+
+    .subtitle {
+      max-width: 720px;
+      margin-bottom: 0;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .mockup-tag,
+    .sample-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid #e6c982;
+      border-radius: 999px;
+      background: #fff8e6;
+      color: #704d0b;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      padding: 7px 10px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .mockup-tag::before,
+    .sample-tag::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #c28a1c;
+      content: "";
+    }
+
+    .overview {
+      display: grid;
+      grid-template-columns: minmax(230px, 0.88fr) minmax(0, 2fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .date-card,
+    .summary-card,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: 0 8px 24px rgb(22 50 61 / 4%);
+    }
+
+    .date-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 18px 20px;
+    }
+
+    .field-label,
+    .summary-label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 750;
+      letter-spacing: 0.035em;
+    }
+
+    input[type="date"] {
+      width: 100%;
+      min-height: 46px;
+      border: 1px solid #afc2c8;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--ink);
+      padding: 9px 11px;
+    }
+
+    .field-help {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .summary-card {
+      min-height: 116px;
+      padding: 16px 19px;
+    }
+
+    .summary-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .summary-label {
+      margin: 0;
+    }
+
+    .summary-value {
+      margin: 0;
+      color: var(--navy);
+      font-size: clamp(1.35rem, 2.2vw, 1.8rem);
+      font-weight: 780;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+    }
+
+    .summary-note {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(370px, 0.88fr);
+      align-items: stretch;
+      gap: 20px;
+    }
+
+    .panel {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 20px 22px 15px;
+    }
+
+    .panel-header h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 1.08rem;
+      letter-spacing: -0.015em;
+    }
+
+    .panel-header p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .panel-body {
+      padding: 0 22px 22px;
+    }
+
+    .map-viewport {
+      display: grid;
+      min-height: 440px;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid #d5e5e8;
+      border-radius: 12px;
+      background:
+        radial-gradient(ellipse at 68% 30%, rgb(213 232 235 / 52%), transparent 34%),
+        linear-gradient(145deg, #f3f8f8, #eaf2f3);
+    }
+
+    .map-art {
+      display: block;
+      width: min(100%, 560px);
+      height: auto;
+      max-height: 450px;
+      padding: 14px;
+    }
+
+    .map-label {
+      fill: #69818a;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .map-marker {
+      stroke: #fff;
+      stroke-width: 3;
+    }
+
+    .map-marker-text {
+      fill: #536d76;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .map-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .map-note strong {
+      color: var(--ink);
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 12px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .legend-title {
+      grid-column: 1 / -1;
+      margin: 0;
+      color: var(--ink);
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      color: #334e58;
+      font-size: 0.75rem;
+    }
+
+    .swatch {
+      flex: 0 0 13px;
+      width: 13px;
+      height: 13px;
+      border: 1px solid rgb(22 50 61 / 18%);
+      border-radius: 50%;
+    }
+
+    .details-stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .empty-state {
+      display: grid;
+      min-height: 168px;
+      align-content: center;
+      justify-items: center;
+      border: 1px dashed #b6c8cd;
+      border-radius: 12px;
+      background: #f8fbfb;
+      padding: 22px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      margin-bottom: 11px;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--ice);
+      color: var(--teal);
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 5px;
+      color: var(--navy);
+      font-size: 0.96rem;
+    }
+
+    .empty-state p {
+      max-width: 290px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .sample-station {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: #fbfdfd;
+    }
+
+    .sample-station-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 11px;
+    }
+
+    .sample-station-heading h3 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 0.9rem;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .data-field {
+      min-width: 0;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: #f0f5f6;
+    }
+
+    .data-field span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.69rem;
+    }
+
+    .data-field strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--ink);
+      font-size: 0.82rem;
+      overflow-wrap: anywhere;
+    }
+
+    .graph-wrap {
+      border: 1px dashed #b6c8cd;
+      border-radius: 12px;
+      background: #fbfdfd;
+      padding: 10px 10px 6px;
+    }
+
+    .graph-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .graph-grid {
+      stroke: #dce6e8;
+      stroke-width: 1;
+    }
+
+    .graph-axis {
+      stroke: #799099;
+      stroke-width: 1.2;
+    }
+
+    .graph-text {
+      fill: #59717a;
+      font-family: inherit;
+      font-size: 10px;
+    }
+
+    .graph-title {
+      fill: #3a5660;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .graph-line-one {
+      fill: none;
+      stroke: var(--teal);
+      stroke-dasharray: 6 5;
+      stroke-linecap: round;
+      stroke-width: 2.5;
+    }
+
+    .graph-line-two {
+      fill: none;
+      stroke: var(--blue);
+      stroke-dasharray: 3 5;
+      stroke-linecap: round;
+      stroke-width: 2.5;
+    }
+
+    .graph-caption {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+      margin: 7px 4px 2px;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .line-key {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .line-swatch {
+      width: 18px;
+      border-top: 2px dashed var(--teal);
+    }
+
+    .line-swatch.median {
+      border-color: var(--blue);
+    }
+
+    .footnote {
+      margin: 17px 3px 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .workspace {
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+        gap: 14px;
+      }
+
+      .map-viewport {
+        min-height: 390px;
+      }
+
+      .panel-header {
+        padding-right: 17px;
+        padding-left: 17px;
+      }
+
+      .panel-body {
+        padding-right: 17px;
+        padding-left: 17px;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 21px 14px 28px;
+      }
+
+      .masthead {
+        display: block;
+        margin-bottom: 17px;
+      }
+
+      .mockup-tag {
+        margin-top: 14px;
+      }
+
+      .overview {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .summary-grid {
+        gap: 10px;
+      }
+
+      .summary-card {
+        min-height: 106px;
+        padding: 14px;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .map-viewport {
+        min-height: 330px;
+      }
+
+      .map-art {
+        max-height: 365px;
+      }
+
+      .panel-header {
+        padding: 17px 16px 13px;
+      }
+
+      .panel-body {
+        padding: 0 16px 17px;
+      }
+
+      .legend {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 400px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-card {
+        min-height: 0;
+      }
+
+      .legend {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .sample-station-heading {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      a,
+      button,
+      input {
+        transition: box-shadow 140ms ease, border-color 140ms ease;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">Utah · Snow Water Equivalent</p>
+        <h1>Utah Snowpack Map</h1>
+        <p class="subtitle">A station-by-station view of snow water equivalent compared with the 1991–2020 median.</p>
+      </div>
+      <span class="mockup-tag">Stage 1 · Layout mockup</span>
+    </header>
+
+    <section class="overview" aria-label="Date and statewide summary">
+      <div class="date-card">
+        <label class="field-label" for="selected-date">Selected date</label>
+        <input id="selected-date" name="selected-date" type="date" min="1991-10-01" aria-describedby="date-help">
+        <p class="field-help" id="date-help">Date shown in America/Denver. Future dates are not available.</p>
+      </div>
+
+      <div class="summary-grid" aria-label="Sample statewide summary">
+        <article class="summary-card">
+          <div class="summary-heading">
+            <p class="summary-label">Average of valid station percentages (unweighted)</p>
+            <span class="sample-tag">Sample</span>
+          </div>
+          <p class="summary-value">103%</p>
+          <p class="summary-note">PLACEHOLDER — not a measured statewide result</p>
+        </article>
+        <article class="summary-card">
+          <div class="summary-heading">
+            <p class="summary-label">Valid stations / eligible stations</p>
+            <span class="sample-tag">Sample</span>
+          </div>
+          <p class="summary-value">118 / 140</p>
+          <p class="summary-note">PLACEHOLDER — counts are illustrative only</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="Map and station information layout">
+      <section class="panel" aria-labelledby="map-heading">
+        <div class="panel-header">
+          <div>
+            <h2 id="map-heading">Utah SNOTEL stations</h2>
+            <p>Full-state map area · station interaction comes in Stage 2</p>
+          </div>
+          <span class="sample-tag">Placeholder</span>
+        </div>
+        <div class="panel-body">
+          <div class="map-viewport">
+            <svg class="map-art" viewBox="0 0 560 500" role="img" aria-labelledby="map-title map-desc">
+              <title id="map-title">Illustrative Utah map placeholder</title>
+              <desc id="map-desc">A stylized Utah outline with illustrative sample markers. It is not a station map and contains no live station locations.</desc>
+              <defs>
+                <pattern id="map-dots" width="18" height="18" patternUnits="userSpaceOnUse">
+                  <circle cx="2" cy="2" r="1" fill="#c9dadd"></circle>
+                </pattern>
+              </defs>
+              <path d="M56 42 H501 V377 H376 V458 H56 Z" fill="url(#map-dots)" stroke="#aac3c9" stroke-width="2"></path>
+              <path d="M56 42 H501 V377 H376 V458 H56 Z" fill="#e2eff0" opacity="0.62"></path>
+              <text class="map-label" x="278" y="234" text-anchor="middle">UTAH MAP PLACEHOLDER</text>
+              <text class="map-marker-text" x="267" y="257" text-anchor="middle">SAMPLE MARKERS · NOT STATION LOCATIONS</text>
+
+              <circle class="map-marker" cx="197" cy="115" r="9" fill="#b94a48"></circle>
+              <circle class="map-marker" cx="347" cy="135" r="9" fill="#d88735"></circle>
+              <circle class="map-marker" cx="265" cy="196" r="9" fill="#398269"></circle>
+              <circle class="map-marker" cx="393" cy="225" r="9" fill="#438bb4"></circle>
+              <circle class="map-marker" cx="221" cy="310" r="9" fill="#315a8c"></circle>
+              <circle class="map-marker" cx="323" cy="350" r="9" fill="#7c898e"></circle>
+
+              <text class="map-marker-text" x="197" y="99" text-anchor="middle">SAMPLE</text>
+              <text class="map-marker-text" x="347" y="119" text-anchor="middle">SAMPLE</text>
+              <text class="map-marker-text" x="265" y="180" text-anchor="middle">SAMPLE</text>
+              <text class="map-marker-text" x="393" y="209" text-anchor="middle">SAMPLE</text>
+              <text class="map-marker-text" x="221" y="294" text-anchor="middle">SAMPLE</text>
+              <text class="map-marker-text" x="323" y="334" text-anchor="middle">NO DATA</text>
+            </svg>
+          </div>
+          <p class="map-note"><strong>Map placeholder:</strong> markers and outline are illustrative only. No station coordinates, NRCS data, zoom, or selection behavior are implemented in Stage 1.</p>
+
+          <div class="legend" aria-label="Placeholder marker color legend">
+            <p class="legend-title">Marker color legend <span class="sample-tag">Placeholder</span></p>
+            <div class="legend-item"><span class="swatch" style="background:var(--red)" aria-hidden="true"></span><span>0–49% of median</span></div>
+            <div class="legend-item"><span class="swatch" style="background:var(--orange)" aria-hidden="true"></span><span>50–79% of median</span></div>
+            <div class="legend-item"><span class="swatch" style="background:var(--green)" aria-hidden="true"></span><span>80–119% of median</span></div>
+            <div class="legend-item"><span class="swatch" style="background:var(--blue)" aria-hidden="true"></span><span>120–149% of median</span></div>
+            <div class="legend-item"><span class="swatch" style="background:var(--deep-blue)" aria-hidden="true"></span><span>150% or higher</span></div>
+            <div class="legend-item"><span class="swatch" style="background:var(--unavailable)" aria-hidden="true"></span><span>Unavailable / no data</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="details-stack" aria-label="Station details and SWE graph placeholders">
+        <section class="panel" aria-labelledby="station-heading">
+          <div class="panel-header">
+            <div>
+              <h2 id="station-heading">Station details</h2>
+              <p>Displayed after a station is selected in a later stage</p>
+            </div>
+            <span class="sample-tag">Placeholder</span>
+          </div>
+          <div class="panel-body">
+            <div class="empty-state">
+              <div class="empty-icon" aria-hidden="true">i</div>
+              <h3>No station selected</h3>
+              <p>Station selection and live details are not part of this layout-only mockup.</p>
+            </div>
+            <div class="sample-station" aria-label="Illustrative station values">
+              <div class="sample-station-heading">
+                <h3>SAMPLE STATION · illustrative values</h3>
+                <span class="sample-tag">Not NRCS data</span>
+              </div>
+              <div class="data-grid">
+                <div class="data-field"><span>Elevation</span><strong>PLACEHOLDER ft</strong></div>
+                <div class="data-field"><span>Observation date</span><strong>PLACEHOLDER</strong></div>
+                <div class="data-field"><span>SWE</span><strong>PLACEHOLDER in</strong></div>
+                <div class="data-field"><span>1991–2020 median SWE</span><strong>PLACEHOLDER in</strong></div>
+                <div class="data-field"><span>Percent of median</span><strong>PLACEHOLDER %</strong></div>
+                <div class="data-field"><span>Source</span><strong>NRCS link placeholder</strong></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="graph-heading">
+          <div class="panel-header">
+            <div>
+              <h2 id="graph-heading">Water-year SWE</h2>
+              <p>SWE (inches) · October 1 through selected date</p>
+            </div>
+            <span class="sample-tag">Placeholder</span>
+          </div>
+          <div class="panel-body">
+            <div class="graph-wrap">
+              <svg class="graph-svg" viewBox="0 0 480 260" role="img" aria-labelledby="graph-title graph-desc">
+                <title id="graph-title">Placeholder water-year SWE graph</title>
+                <desc id="graph-desc">Illustrative dashed lines and axes only. There are no measured SWE values or calculated median values.</desc>
+                <text class="graph-title" x="48" y="18">SWE (inches)</text>
+                <line class="graph-grid" x1="58" y1="50" x2="455" y2="50"></line>
+                <line class="graph-grid" x1="58" y1="95" x2="455" y2="95"></line>
+                <line class="graph-grid" x1="58" y1="140" x2="455" y2="140"></line>
+                <line class="graph-grid" x1="58" y1="185" x2="455" y2="185"></line>
+                <line class="graph-axis" x1="58" y1="40" x2="58" y2="203"></line>
+                <line class="graph-axis" x1="58" y1="203" x2="455" y2="203"></line>
+                <text class="graph-text" x="48" y="54" text-anchor="end">—</text>
+                <text class="graph-text" x="48" y="99" text-anchor="end">—</text>
+                <text class="graph-text" x="48" y="144" text-anchor="end">—</text>
+                <text class="graph-text" x="48" y="189" text-anchor="end">—</text>
+                <text class="graph-text" x="58" y="220" text-anchor="middle">Oct 1</text>
+                <text class="graph-text" x="190" y="220" text-anchor="middle">Jan 1</text>
+                <text class="graph-text" x="322" y="220" text-anchor="middle">Apr 1</text>
+                <text class="graph-text" x="455" y="220" text-anchor="middle">Selected date</text>
+                <text class="graph-title" x="256" y="248" text-anchor="middle">Date</text>
+                <path class="graph-line-one" d="M62 175 C105 164 112 151 151 145 S211 119 246 125 S299 78 342 83 S405 57 451 63"></path>
+                <path class="graph-line-two" d="M62 181 C105 169 118 159 151 151 S210 130 246 119 S298 97 342 89 S405 69 451 74"></path>
+              </svg>
+              <p class="graph-caption">
+                <span class="line-key"><span class="line-swatch" aria-hidden="true"></span>Selected water year · placeholder</span>
+                <span class="line-key"><span class="line-swatch median" aria-hidden="true"></span>1991–2020 median · placeholder</span>
+              </p>
+            </div>
+            <p class="map-note"><strong>Graph placeholder:</strong> axes and sample lines show intended layout only. They are not measurements and do not represent calculated SWE.</p>
+          </div>
+        </section>
+      </aside>
+    </section>
+
+    <p class="footnote">Stage 1 visual mockup · All marker positions, summary values, station fields, and graph lines are placeholders.</p>
+  </main>
+  <script>
+    const dateInput = document.querySelector("#selected-date");
+    const utahDate = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Denver",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date());
+    dateInput.value = utahDate;
+    dateInput.max = utahDate;
+  </script>
+</body>
+</html>

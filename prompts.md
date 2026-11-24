@@ -516,3 +516,43 @@ readiness for Stage 1.
 **Result:**
 The specification is ready for Stage 1 planning. No app implementation was
 started.
+
+## Prompt 19 - Build Stage 1 Page Mockup
+
+**Prompt:**
+Read spec.md and build only Stage 1 as a single-file index.html containing the
+page layout with title, date picker, statewide summary, Utah map placeholder,
+station details and SWE graph placeholders, marker legend, responsive
+engineering-focused styling, accessible labels, and visible keyboard focus.
+Use SAMPLE/PLACEHOLDER content only. Do not connect to NRCS, implement
+calculations, add custom features, or build later stages. Update prompts.md,
+explain browser preview and review checks, and do not commit.
+
+**Agent Response / Decisions:**
+- Created a self-contained index.html with inline CSS and minimal JavaScript
+  only for the America/Denver date default and future-date maximum.
+- Added responsive desktop map/details columns and mobile vertical stacking.
+- Added an illustrative Utah map silhouette with clearly labeled sample markers,
+  visible five-level marker legend, and gray unavailable swatch.
+- Added statewide summary, sample station details, and an SVG graph placeholder,
+  with clear notices that all values and marks are non-data placeholders.
+- No NRCS requests, real calculations, station interactions, or additional
+  features were implemented.
+- No commit was created.
+
+**Files Changed:**
+- `index.html`: created Stage 1 page mockup.
+- `prompts.md`: appended this Prompt 19 entry.
+
+**Result:**
+Stage 1 mockup created. Verification and user review remain before approval;
+later stages have not been built.
+
+**Verification addendum:**
+- Opened index.html in the browser and confirmed the expected accessible page
+  structure and placeholder disclosures.
+- Checked 390px mobile and 1440px desktop viewports; neither has horizontal
+  overflow, and the layout changes from one mobile column to two desktop columns.
+- Confirmed the date input defaults to the current America/Denver date and sets
+  the same date as its maximum.
+- Stage 1 remains pending user visual review and approval.
