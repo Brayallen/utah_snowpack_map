@@ -82,6 +82,14 @@ Selecting an earlier date uses historical mode: use only a DAILY observation fro
 - Status, unavailable, stale, and last-known-data indicators must not rely on color alone.
 - Default the date picker to today's date in America/Denver and prevent future dates.
 
+### NRCS API reliability
+- Serialize NRCS AWDB requests so only one API request is active at a time. Coalesce data refreshes requested while a load is running into one follow-up load for the latest selected date.
+- Retry HTTP 429 and 5xx responses up to three total attempts, using exponential backoff starting at 500 ms and a maximum delay of 10 seconds. Do not automatically retry HTTP 403 or other non-retryable responses.
+- Honor `Retry-After` when the browser can read it, capped at 10 seconds. The AWDB responses inspected for this app do not expose `Retry-After` through CORS; when it is hidden, use the exponential-backoff delay instead. Strictly honoring a hidden header requires NRCS to expose it.
+- Include the failed AWDB endpoint and HTTP status in the visible error message without displaying station-triplet query parameters.
+- If a refresh fails after earlier data loaded successfully, keep the last successful data visible, label it as last-known data, and provide Retry.
+- These transport-reliability behaviors do not change measurement requests, SWE calculations, quality rules, or the historical `periodRef=START` and current hourly conventions.
+
 ## Validation
 ### AWDB station-level reference tests
 

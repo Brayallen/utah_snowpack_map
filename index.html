@@ -855,6 +855,11 @@
       font-weight: 750;
     }
 
+    .retry-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
     .loading-row {
       display: none;
       align-items: center;
@@ -1259,6 +1264,9 @@
     const comparisonLegend = document.querySelector("#comparison-legend");
     const comparisonGraphStatus = document.querySelector("#comparison-graph-status");
     const AWDB_BASE = "https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1";
+    const AWDB_MAX_ATTEMPTS = 3;
+    const AWDB_RETRY_BASE_DELAY_MS = 500;
+    const AWDB_MAX_RETRY_DELAY_MS = 10000;
 
     let stations = [];
     let selectedStationId = null;
@@ -1268,6 +1276,9 @@
     let lastSuccessfulResult = null;
     let loadSequence = 0;
     let comparisonGraphSequence = 0;
+    let dataLoadInProgress = false;
+    let dataLoadPending = false;
+    let awdbRequestQueue = Promise.resolve();
 
     function markerColor(percent) {
       if (percent === null || !Number.isFinite(percent)) return markerColors.unavailable;
@@ -1278,11 +1289,12 @@
       return markerColors.veryHigh;
     }
 
-    function setLoading(isLoading) {
+    function setLoading(isLoading, completionStatus = "NRCS station data loaded") {
       loadingRow.classList.toggle("visible", isLoading);
+      retryButton.disabled = isLoading;
       document.querySelector("#map-status-text").textContent = isLoading
         ? "Loading NRCS station data…"
-        : "NRCS station data loaded";
+        : completionStatus;
     }
 
     function showStatus(message, isError = false) {
@@ -1322,10 +1334,71 @@
       return `${timestamp} (AWDB UTC${utcOffsetString(station.dataTimeZone)})`;
     }
 
-    async function fetchJson(url) {
-      const response = await fetch(url, { headers: { Accept: "application/json" } });
-      if (!response.ok) throw new Error(`NRCS AWDB returned HTTP ${response.status}`);
-      return response.json();
+    function awdbEndpoint(url) {
+      const requestUrl = new URL(url);
+      const basePath = new URL(AWDB_BASE).pathname;
+      const path = requestUrl.pathname.slice(basePath.length) || "/";
+      const duration = requestUrl.searchParams.get("duration");
+      const element = requestUrl.searchParams.get("elements");
+      return `${path}${duration ? ` (${duration} ${element ?? "data"})` : ""}`;
+    }
+
+    function retryDelay(response, attempt) {
+      const exponentialDelay = Math.min(
+        AWDB_RETRY_BASE_DELAY_MS * (2 ** (attempt - 1)),
+        AWDB_MAX_RETRY_DELAY_MS
+      );
+      const retryAfter = response.headers.get("Retry-After");
+      if (!retryAfter) return exponentialDelay;
+
+      const seconds = Number(retryAfter);
+      const retryDate = Date.parse(retryAfter);
+      const requestedDelay = Number.isFinite(seconds)
+        ? seconds * 1000
+        : Number.isFinite(retryDate)
+          ? retryDate - Date.now()
+          : null;
+      if (requestedDelay === null || requestedDelay < 0) return exponentialDelay;
+      return Math.min(Math.max(exponentialDelay, requestedDelay), AWDB_MAX_RETRY_DELAY_MS);
+    }
+
+    function wait(milliseconds) {
+      return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+    }
+
+    async function fetchJsonWithRetry(url) {
+      const endpoint = awdbEndpoint(url);
+      for (let attempt = 1; attempt <= AWDB_MAX_ATTEMPTS; attempt += 1) {
+        let response;
+        try {
+          response = await fetch(url, { headers: { Accept: "application/json" } });
+        } catch {
+          throw new Error(`AWDB endpoint ${endpoint} could not be reached.`);
+        }
+
+        if (response.ok) {
+          try {
+            return await response.json();
+          } catch {
+            throw new Error(`AWDB endpoint ${endpoint} returned an invalid response.`);
+          }
+        }
+
+        const isRetryable = response.status === 429 || (response.status >= 500 && response.status <= 599);
+        if (isRetryable && attempt < AWDB_MAX_ATTEMPTS) {
+          await wait(retryDelay(response, attempt));
+          continue;
+        }
+        throw new Error(`AWDB endpoint ${endpoint} returned HTTP ${response.status}.`);
+      }
+
+      throw new Error(`AWDB endpoint ${endpoint} failed after ${AWDB_MAX_ATTEMPTS} attempts.`);
+    }
+
+    function fetchJson(url) {
+      const request = awdbRequestQueue.then(() => fetchJsonWithRetry(url));
+      awdbRequestQueue = request.then(() => undefined, () => undefined);
+      return request;
     }
 
     function chunk(items, size) {
@@ -1437,11 +1510,18 @@
     }
 
     async function loadData() {
+      if (dataLoadInProgress) {
+        dataLoadPending = true;
+        return;
+      }
+
+      dataLoadInProgress = true;
       const sequence = ++loadSequence;
       setLoading(true);
       clearStatus();
       const selectedDate = dateInput.value;
       const currentMode = selectedDate === utahDate;
+      let requestFailed = false;
 
       try {
         if (!stations.length) {
@@ -1486,14 +1566,26 @@
         renderStations(processed);
         clearStatus();
       } catch (error) {
+        requestFailed = true;
+        const message = error instanceof Error ? error.message : "AWDB request failed.";
         if (lastSuccessfulResult) {
-          showStatus(`NRCS request failed. Showing last-known data for ${lastSuccessfulResult.selectedDate}. ${error.message}`, true);
+          showStatus(`NRCS refresh failed. Showing last successfully loaded data for ${lastSuccessfulResult.selectedDate}. ${message}`, true);
           renderStations(lastSuccessfulResult.stations);
         } else {
-          showStatus(`NRCS AWDB data could not be loaded. ${error.message}`, true);
+          showStatus(`NRCS AWDB data could not be loaded. ${message}`, true);
         }
       } finally {
-        setLoading(false);
+        const completionStatus = requestFailed
+          ? lastSuccessfulResult
+            ? "Refresh failed; showing last-known NRCS data"
+            : "NRCS data could not be loaded"
+          : "NRCS station data loaded";
+        setLoading(false, completionStatus);
+        dataLoadInProgress = false;
+        if (dataLoadPending) {
+          dataLoadPending = false;
+          void loadData();
+        }
       }
     }
 

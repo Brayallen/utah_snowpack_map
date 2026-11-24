@@ -1262,3 +1262,145 @@ No commit or publication was made.
 The approved corrections passed the HTTP browser retests. No calculations,
 AWDB request behavior, or quality rules changed. The app remains unpublished
 and uncommitted; GitHub Pages deployment has not been tested.
+
+## Prompt 31 - Investigate GitHub Pages AWDB Failures
+
+**Prompt:**
+Investigate why the deployed GitHub Pages app reports an AWDB HTTP 403 while
+localhost works. Inspect all AWDB requests, identify the failing endpoint,
+compare URL parameters, Origin, Referer, and response headers, assess blocking,
+rate limiting, hosting-origin restrictions, metadata versus observations, and
+recommend a reliable solution preserving live official NRCS data, single-file
+HTML, and GitHub Pages. Do not use an untrusted proxy, hard-code measurements,
+change calculations, or edit app code. Update this log and wait for approval
+before changes.
+
+**Agent Response / Findings:**
+- Identified the deployed site as
+  `https://brayallen.github.io/utah_snowpack_map/` from the repository remote;
+  it serves the app over HTTPS.
+- Inspected all AWDB routes in index.html:
+  - First-load metadata: `GET /stations` with wildcard Utah SNOTEL triplets,
+    WTEQ, DAILY, `activeOnly=true`, and `returnStationElements=true`.
+  - Current mode: five 35-station HOURLY WTEQ batches (`beginDate=-24`,
+    `endDate=0`, `periodRef=END`) and five DAILY median batches for the prior
+    matching calendar day (`periodRef=START`, `centralTendencyType=MEDIAN`).
+  - Historical mode: DAILY exact-date WTEQ batches with START and median.
+  - Station and comparison graphs: DAILY WTEQ requests with START.
+- Could not reproduce the reported HTTP 403. The deployed page returned HTTP
+  500 on the metadata endpoint in one load and HTTP 500 on a current-mode DAILY
+  median batch in a later load. Because metadata failed first in the first
+  attempt, no observation request followed that failure. In the later attempt,
+  the metadata request had succeeded before the median batch failed.
+- The same GitHub Pages-origin browser later fetched metadata, one-station
+  current HOURLY SWE, and one-station DAILY median successfully (HTTP 200).
+  The exact 35-station median batch that had returned 500 subsequently returned
+  HTTP 200 with both GitHub and localhost Origin/Referer values.
+- Localhost browser requests used the same API host, methods, Accept header,
+  URLs, and parameters. Captured requests had no Origin header in either
+  browser; Referer was `http://127.0.0.1:8000/` locally and
+  `https://brayallen.github.io/` on the deployed page. Curl requests with
+  explicit GitHub and localhost Origin/Referer headers both returned HTTP 200.
+- Failed responses were from the NRCS Apache/mod_jk server and included
+  `Access-Control-Allow-Origin: *` and `Access-Control-Allow-Headers: *`.
+  The captured HTTP 500 responses had an empty body and no `Retry-After` header.
+  Successful localhost responses used the same server and permissive CORS
+  headers.
+- The evidence does not support a GitHub Pages CORS or origin restriction.
+  Browser code received an HTTP response, so this is not a browser CORS failure.
+  No rate-limit status/header was observed; rate limiting cannot be confirmed.
+  Intermittent AWDB-side/server errors are the best-supported explanation, but
+  the user's reported 403 cannot be assigned to a specific endpoint without
+  its Network-panel request details. The app currently reports only the status,
+  not which request failed.
+- Recommendation: make no proxy, header-spoofing, endpoint, calculation, or
+  data-source change. The direct official API requests work from both origins.
+  If failures recur, capture the failing request URL/status/headers from the
+  published page. A repeatable 403 should be referred to NRCS AWDB support;
+  a static GitHub Pages app has no supported same-origin proxy mechanism.
+  If approved later, improve resilience with bounded retry/backoff for
+  transient 429/5xx responses (honor `Retry-After`) and include the endpoint
+  role in the error message; do not retry or bypass a 403 automatically.
+- No application code, validated formulas, reporting conventions, or API
+  parameters were changed. No third-party proxy or sample data was used.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 31 investigation and recommendations.
+
+**Result:**
+The published-site 403 was not reproducible during the audit. Two transient 500
+responses occurred at different request stages, while the same endpoints and
+exact failed batch subsequently returned 200 from both hosting contexts.
+Evidence points away from a GitHub Pages origin restriction; the intermittent
+upstream failure and the reported 403's precise request remain unconfirmed.
+No commit or publication change was made.
+
+## Prompt 32 - Add Bounded AWDB Retries
+
+**Prompt:**
+Add up to three total attempts with exponential backoff for AWDB HTTP 429 and
+5xx responses, honor Retry-After within a maximum delay, never retry 403, show
+the failed endpoint and status, preserve last-successful data with a warning,
+and limit excessive requests. Preserve all validated calculations and data
+conventions. Test temporary, persistent, and successful requests on localhost;
+update spec.md and prompts.md; do not commit; explain GitHub Pages publication
+and verification steps.
+
+**Investigation / Decision Needed:**
+- Confirmed AWDB browser responses currently expose `Access-Control-Allow-Origin`
+  and `Access-Control-Allow-Headers`, but not `Access-Control-Expose-Headers`.
+  `Retry-After` is not a CORS-safelisted response header, so a GitHub Pages
+  script cannot read it unless NRCS exposes it on the response.
+- A client-only implementation can parse and honor `Retry-After` when the
+  response makes it readable, and otherwise apply bounded exponential backoff.
+  It cannot guarantee honoring a header that the browser's CORS rules hide.
+- No application code or spec changes have been made pending the user's
+  decision whether this best-effort client-only behavior is acceptable or
+  whether to pause for an NRCS-supported way to expose that header.
+
+**Files Changed:**
+- `prompts.md`: appended this request and the CORS limitation.
+
+**Result:**
+Implementation and the requested retry tests are paused for clarification.
+
+### Prompt 32 Follow-up - Approved Best-Effort Retry and Verification
+
+**User Decision:**
+- Approved the client-only best-effort approach: read `Retry-After` when the
+  browser exposes it, otherwise use bounded exponential backoff.
+
+**Changes and Test Outcomes:**
+- Implemented the approved retry and request-serialization behavior in
+  `index.html`, and documented its CORS limitation and unchanged data rules in
+  `spec.md`.
+- Browser-tested a simulated HTTP 429 with an exposed `Retry-After: 1`: the
+  retry occurred after about 1.0 seconds, then the data load completed
+  successfully. Five data batches plus the retried first batch produced six
+  requests.
+- Browser-tested a persistent HTTP 503: exactly three attempts were made, the
+  user-facing warning identified `/data (DAILY WTEQ)` and HTTP 503, and the
+  last successful station data remained displayed.
+- Browser-tested HTTP 403: exactly one request was made, with no automatic
+  retry; the warning identified `/data (DAILY WTEQ)` and HTTP 403 and retained
+  the last successful data.
+- Browser-tested recovery through a successful mocked response and confirmed
+  the live localhost app then loaded official NRCS data. For April 1, 2025,
+  Brighton remained 20.8 inches SWE, 21.2 inches median, and 98%; statewide
+  coverage was 71/141 with a 92% unweighted average.
+- Delayed intercepted requests across 25 AWDB calls and measured a maximum of
+  one simultaneous request, confirming serialization.
+- `git diff --check` passed. No validated calculation or observation rule was
+  changed.
+
+**Files Changed:**
+- `index.html`: bounded retry, request serialization, and last-known-data
+  reliability behavior.
+- `spec.md`: documented the reliability behavior and CORS limitation.
+- `prompts.md`: appended this approval and verification record.
+
+**Result:**
+The approved reliability improvement passed the simulated 429, persistent 503,
+non-retryable 403, recovery, serialization, and live localhost validation
+checks. The browser-only `Retry-After` limitation remains: a header hidden by
+NRCS CORS cannot be read by the app. No commit or publication was made.
