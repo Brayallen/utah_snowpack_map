@@ -367,3 +367,28 @@ decisions afterward.
 **Result:**
 The approved Look and Feel section was applied. No app code or build artifacts
 were created.
+
+## Prompt 14 - Update Out of Scope Section
+
+**Prompt:**
+Approve all five additional Out of Scope exclusions. Explicitly exclude future
+snowfall and water-supply forecasting, reservoir storage, flood warnings and
+emergency alerts, non-SNOTEL measurements, basin/county/water-supply forecasts,
+irrigation/agricultural recommendations, and historical data downloads/exports.
+Clarify that historical date selection and SWE visualization remain included,
+and that the app is informational rather than a replacement for NRCS reports or
+professional engineering judgment. Update prompts.md and do not build app code.
+
+**Agent Response / Decisions:**
+- Updated only the Out of Scope section of spec.md.
+- Added all approved exclusions.
+- Explicitly preserved historical date selection and historical SWE visualization.
+- Added the informational-use and professional-judgment disclaimer.
+
+**Files Changed:**
+- `spec.md`: updated only the Out of Scope section.
+- `prompts.md`: appended this Prompt 14 entry.
+
+**Result:**
+The approved Out of Scope section was applied. No app code or build artifacts
+were created.

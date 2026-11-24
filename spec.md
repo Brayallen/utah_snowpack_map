@@ -110,6 +110,14 @@ Edge-case tests:
 Independent comparison against downloadable NRCS Utah Snow Survey reports is still pending. The app is not yet implemented, and validation has not passed.
 
 ## Out of Scope
-- Predicting future snowfall.
-- Calculating reservoir storage.
-- Providing flood warnings.
+- Future snowfall and water-supply forecasting.
+- Reservoir storage calculations.
+- Flood warnings and emergency alerts.
+- Snow-course and other non-SNOTEL measurements.
+- Basin, county, and water-supply forecasts.
+- Irrigation demand and agricultural recommendations.
+- Historical data downloads or exports.
+
+Historical date selection and historical SWE visualization remain included in the app.
+
+The app is informational only and is not a replacement for official NRCS reports or professional engineering judgment.
