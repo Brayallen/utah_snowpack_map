@@ -25,11 +25,25 @@ In current mode, "current" means the latest valid NRCS observation available for
 - Display the valid station count and total eligible station count as coverage.
 
 ## Outputs
-- Map of approximately 140 Utah SNOTEL stations.
-- Colored markers showing percent of median SWE.
-- Station name, elevation, SWE, and median SWE.
-- A graph comparing this water year's SWE to the historical median.
-- Statewide average percent of median.
+- A Utah map of live active Utah SNOTEL stations that contain WTEQ data.
+- A five-level, visible marker color scale based on percent of median SWE:
+  - 0-49%
+  - 50-79%
+  - 80-119%
+  - 120-149%
+  - 150% or higher
+- Use unrounded station percentages for marker classification and only round whole percentages for display.
+- Display missing, invalid, stale, or zero-median stations as solid gray markers.
+- Exclude gray markers from the statewide average and explain the station's unavailable status in the tooltip or station details.
+- A station detail panel containing station name, elevation, selected date, observation timestamp, SWE, median SWE, percent of median, and NRCS source information.
+- SWE and median SWE are in inches and displayed to 0.1 inch; percent of median is displayed as a whole percentage.
+- A two-line station SWE graph spanning October 1 through the selected date:
+  - selected water year's SWE
+  - 1991-2020 median SWE
+- Label the graph axes as SWE (inches) and Date, and display missing observations as gaps rather than interpolated values.
+- A statewide summary labeled "Average of valid station percentages (unweighted)" with the valid/eligible station count.
+- A visible legend explaining the marker color scale and solid-gray unavailable state.
+- A sortable station table and CSV downloads are out of the initial build.
 
 ## Look and Feel
 - Clean, easy-to-read layout with a large Utah map.

@@ -152,3 +152,67 @@ logging; do not build the app. Then identify the next four sections to review.
 **Result:**
 The approved specification changes were applied. No app code or build artifacts
 were created.
+
+## Prompt 7 - Review Outputs Section
+
+**Prompt:**
+Review the Outputs section of spec.md. Recommend a clear marker color scale,
+missing-data and zero-median marker behavior, graph labels and units, statewide
+average and valid station count display, and additional engineering outputs.
+Explain recommendations and ask questions about choices. Do not modify spec.md
+or build code; only update prompts.md.
+
+**Agent Response / Decisions:**
+- Recommended a five-level accessible percent-of-median marker scale:
+  0-49%, 50-79%, 80-119%, 120-149%, and 150% or higher.
+- Approved choice: unavailable stations use a neutral solid-gray marker rather
+  than a dashed-ring marker.
+- Missing observations, invalid quality flags, and zero-median stations will
+  have explicit unavailable reasons when a station is inspected.
+- Recommended the SWE graph use two lines: current water-year SWE and the
+  1991-2020 median, in inches, from October 1 through the selected date.
+- Missing graph observations should appear as breaks rather than interpolated
+  line segments.
+- Recommended the top summary show the whole-percent unweighted average and
+  valid/eligible station coverage.
+- Approved additional outputs: selected-date and station-as-of timestamps,
+  NRCS AWDB source link, visible units and legend, and a sortable station table.
+- Recommendations should not be added to spec.md until the user approves each
+  Output decision during the specification-edit stage.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 7 entry.
+
+**Result:**
+Planning review completed for Outputs. No files other than prompts.md were
+modified, and no app code was built.
+
+## Prompt 8 - Apply Approved Outputs Decisions
+
+**Prompt:**
+Approve the five-level marker color scale with legend, solid-gray unavailable
+markers, the two-line SWE graph from October 1 through the selected date,
+statewide unweighted average with valid/eligible station count, and required
+station detail fields. Use unrounded values for calculations and classification,
+round only for display. Postpone the sortable table and leave CSV downloads out
+of the initial build. Update only Outputs in spec.md and continue prompt logging.
+Do not build app code.
+
+**Agent Response / Decisions:**
+- Updated only the Outputs section of spec.md.
+- Added the five marker ranges, visible legend, solid-gray unavailable state,
+  missing-data exclusions, and station details.
+- Defined SWE and median SWE in inches to 0.1 inch and percent of median as a
+  whole percentage.
+- Added the two-line October 1-to-selected-date graph, axis labels, median
+  reference, and missing-data gaps.
+- Added the statewide unweighted average label and valid/eligible station count.
+- Explicitly postponed the sortable station table and CSV downloads.
+
+**Files Changed:**
+- `spec.md`: updated only the Outputs section.
+- `prompts.md`: appended this Prompt 8 entry.
+
+**Result:**
+All approved Outputs decisions were applied. No app code or build artifacts
+were created.
