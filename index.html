@@ -532,6 +532,77 @@
       overflow-wrap: anywhere;
     }
 
+    .data-quality-panel {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fbfb;
+    }
+
+    .data-quality-panel summary {
+      min-height: 44px;
+      padding: 11px 13px;
+      color: var(--navy);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 750;
+    }
+
+    .data-quality-panel[open] summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .quality-panel-body {
+      display: grid;
+      gap: 11px;
+      padding: 12px;
+    }
+
+    .quality-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 0;
+    }
+
+    .quality-field {
+      min-width: 0;
+      padding: 8px 9px;
+      border-radius: 8px;
+      background: #edf3f4;
+    }
+
+    .quality-field dt {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 650;
+    }
+
+    .quality-field dd {
+      margin: 3px 0 0;
+      color: var(--ink);
+      font-size: 0.77rem;
+      overflow-wrap: anywhere;
+    }
+
+    .quality-field a {
+      color: #075f79;
+      font-weight: 700;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+    }
+
+    .quality-explanation {
+      margin: 0;
+      border-left: 3px solid var(--teal);
+      border-radius: 0 7px 7px 0;
+      background: #edf5f5;
+      color: #294852;
+      padding: 9px 10px;
+      font-size: 0.76rem;
+      overflow-wrap: anywhere;
+    }
+
     .graph-wrap {
       border: 1px dashed #b6c8cd;
       border-radius: 12px;
@@ -903,6 +974,10 @@
         align-items: flex-start;
         flex-direction: column;
       }
+
+      .quality-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (prefers-reduced-motion: no-preference) {
@@ -1032,6 +1107,23 @@
                   <div class="data-field"><span>Data status</span><strong id="station-availability">Loading</strong></div>
                   <div class="data-field"><span>Source</span><strong><a id="station-source" href="https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs" target="_blank" rel="noopener noreferrer">NRCS AWDB REST API</a></strong></div>
                 </div>
+                <details id="data-quality-panel" class="data-quality-panel">
+                  <summary>Station Data Quality</summary>
+                  <div class="quality-panel-body">
+                    <dl class="quality-grid">
+                      <div class="quality-field"><dt>Effective data status</dt><dd id="quality-status">Unavailable</dd></div>
+                      <div class="quality-field"><dt>Observation date</dt><dd id="quality-date">Unavailable</dd></div>
+                      <div class="quality-field"><dt>Exact observation timestamp</dt><dd id="quality-timestamp">Unavailable</dd></div>
+                      <div class="quality-field"><dt>Observation age</dt><dd id="quality-age">Unavailable</dd></div>
+                      <div class="quality-field"><dt>AWDB qcFlag</dt><dd id="quality-qc-flag">Unavailable</dd></div>
+                      <div class="quality-field"><dt>AWDB qaFlag</dt><dd id="quality-qa-flag">Unavailable</dd></div>
+                      <div class="quality-field"><dt>1991–2020 median SWE</dt><dd id="quality-median">Unavailable</dd></div>
+                      <div class="quality-field"><dt>Station identifier / triplet</dt><dd id="quality-station-id">Unavailable</dd></div>
+                      <div class="quality-field"><dt>NRCS / AWDB source</dt><dd><a id="quality-source" href="https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs" target="_blank" rel="noopener noreferrer">Open official AWDB data request</a></dd></div>
+                    </dl>
+                    <p id="quality-explanation" class="quality-explanation" role="status" aria-live="polite"></p>
+                  </div>
+                </details>
               </div>
             </div>
           </section>
@@ -1509,8 +1601,123 @@
       }
     }
 
+    function effectiveDataStatus(station) {
+      const status = station.status ?? "";
+      if (status.includes("Stale observation")) return "Stale";
+      if (
+        status.includes("Missing observation for exact selected date") ||
+        status.includes("Missing SWE observation") ||
+        status.includes("No hourly SWE value")
+      ) return "Missing";
+      if (
+        status.includes("timestamp unavailable") ||
+        status.includes("timestamp is in the future") ||
+        station.qcFlag !== "V" ||
+        station.qaFlag !== "A"
+      ) return "Invalid";
+      if (status.toLowerCase().includes("median")) return "Median unavailable";
+      if (station.percent !== null && Number.isFinite(Number(station.percent))) return "Valid";
+      return "Invalid";
+    }
+
+    function qcFlagDescription(flag) {
+      if (flag === "V") return "V — valid QC code; this app requires V.";
+      if (flag) return `${flag} — not accepted; this app requires V.`;
+      return "Not provided — this app requires V.";
+    }
+
+    function qaFlagDescription(flag) {
+      if (flag === "A") return "A — Approved; other date, QC, freshness, and median rules must also pass.";
+      if (flag === "R") return "R — Raw; unapproved and excluded from calculations.";
+      if (flag === "P") return "P — Provisional; unapproved and excluded from calculations.";
+      if (flag) return `${flag} — not Approved; this app requires A.`;
+      return "Not provided — this app requires A.";
+    }
+
+    function dataQualityExplanation(station, status, currentMode, selectedDate) {
+      const sourceStatus = station.status ?? "";
+      if (status === "Valid") {
+        return currentMode
+          ? "Accepted: the hourly observation is within 24 hours, qcFlag is V, qaFlag is A, and the median is nonzero. It contributes to percent of median and the statewide average."
+          : `Accepted: a DAILY observation exactly matches ${selectedDate}, qcFlag is V, qaFlag is A, and the median is nonzero. It contributes to percent of median and the statewide average.`;
+      }
+      if (status === "Stale") {
+        const age = Number.isFinite(station.ageHours) ? `${station.ageHours.toFixed(1)} hours old` : "older than the freshness limit";
+        return `This current-mode hourly observation is ${age}, exceeding the 24-hour limit. Its SWE may be displayed, but it is excluded from percent-of-median and statewide calculations.`;
+      }
+      if (status === "Missing") {
+        if (sourceStatus.includes("Missing observation for exact selected date")) {
+          return `No DAILY observation exactly matches ${selectedDate}. The app does not substitute an earlier value, so this station is excluded from percentage and statewide calculations.`;
+        }
+        if (sourceStatus.includes("Missing SWE observation")) {
+          return `An AWDB record exists for ${station.observationDate ?? selectedDate}, but its SWE value is missing. The station is excluded from percentage and statewide calculations.`;
+        }
+        return "No hourly SWE observation is available for the current period. The station is excluded from percentage and statewide calculations.";
+      }
+      if (status === "Invalid") {
+        const reasons = [];
+        if (station.qaFlag !== "A") {
+          const qaName = station.qaFlag === "R" ? "Raw" : station.qaFlag === "P" ? "Provisional" : "unapproved";
+          reasons.push(`QA is ${qaName} (${station.qaFlag ?? "not provided"}), not Approved (A)`);
+        }
+        if (station.qcFlag !== "V") reasons.push(`QC is ${station.qcFlag ?? "not provided"}; the app requires V`);
+        if (sourceStatus.includes("timestamp unavailable")) reasons.push("the current observation timestamp is unavailable");
+        if (sourceStatus.includes("timestamp is in the future")) reasons.push("the observation timestamp is in the future");
+        if (!reasons.length) reasons.push(sourceStatus || "the observation did not pass the app's validity checks");
+        return `${reasons.join("; ")}. The observation is excluded from percent-of-median and statewide calculations.`;
+      }
+      if (station.median === 0) {
+        return "The median SWE is zero, so percent of median is undefined. The station is excluded from percent-of-median and statewide calculations.";
+      }
+      return "The 1991–2020 median SWE is unavailable. Percent of median cannot be calculated, so the station is excluded from statewide calculations.";
+    }
+
+    function updateDataQuality(station, sourceUrl, currentMode, selectedDate) {
+      const status = effectiveDataStatus(station);
+      const noExactObservation = (station.status ?? "").includes("Missing observation for exact selected date");
+      const medianAvailable = station.median !== null &&
+        station.median !== undefined &&
+        Number.isFinite(Number(station.median));
+
+      document.querySelector("#quality-status").textContent = status;
+      document.querySelector("#quality-date").textContent = noExactObservation
+        ? `No observation matched ${selectedDate}`
+        : station.observationDate ?? "Unavailable";
+      document.querySelector("#quality-timestamp").textContent = station.observationTimestamp
+        ? timestampLabel(station, station.observationTimestamp)
+        : currentMode
+          ? "Unavailable; no hourly timestamp was returned"
+          : noExactObservation
+            ? "Unavailable; no exact-date daily record was returned"
+            : station.observationDate
+              ? `Daily AWDB record for ${station.observationDate}; time of day is not provided`
+              : "Unavailable";
+      document.querySelector("#quality-age").textContent = !currentMode
+        ? "Not applicable to historical DAILY observations"
+        : !Number.isFinite(station.ageHours)
+          ? "Unavailable; timestamp could not be evaluated"
+          : station.ageHours < 0
+            ? "Timestamp is in the future"
+            : `${station.ageHours.toFixed(1)} hours old; 24-hour limit`;
+      document.querySelector("#quality-qc-flag").textContent = station.qcFlag === null || station.qcFlag === undefined
+        ? qcFlagDescription(null)
+        : qcFlagDescription(station.qcFlag);
+      document.querySelector("#quality-qa-flag").textContent = station.qaFlag === null || station.qaFlag === undefined
+        ? qaFlagDescription(null)
+        : qaFlagDescription(station.qaFlag);
+      document.querySelector("#quality-median").textContent = medianAvailable
+        ? `Available — ${Number(station.median).toFixed(1)} in${station.median === 0 ? "; zero, so percent is unavailable" : ""}${station.medianReferenceDate ? `; lookup ${station.medianReferenceDate}` : ""}`
+        : "Unavailable; no valid 1991–2020 median value was returned";
+      document.querySelector("#quality-station-id").textContent = station.id;
+      document.querySelector("#quality-source").href = sourceUrl;
+      document.querySelector("#quality-explanation").textContent =
+        dataQualityExplanation(station, status, currentMode, selectedDate);
+    }
+
     async function selectStation(station) {
       selectedStationId = station.id;
+      const selectedDate = lastSuccessfulResult?.selectedDate ?? dateInput.value;
+      const currentMode = lastSuccessfulResult?.currentMode ?? (selectedDate === utahDate);
       document.querySelector("#station-name").textContent = station.name;
       document.querySelector("#station-id").textContent = station.id;
       document.querySelector("#station-elevation").textContent = Number.isFinite(Number(station.elevation))
@@ -1542,12 +1749,13 @@
       sourceUrl.searchParams.set("stationTriplets", station.id);
       sourceUrl.searchParams.set("elements", "WTEQ");
       sourceUrl.searchParams.set("duration", station.observationTimestamp ? "HOURLY" : "DAILY");
-      sourceUrl.searchParams.set("beginDate", station.observationTimestamp ? "-24" : dateInput.value);
-      sourceUrl.searchParams.set("endDate", station.observationTimestamp ? "0" : dateInput.value);
+      sourceUrl.searchParams.set("beginDate", station.observationTimestamp ? "-24" : selectedDate);
+      sourceUrl.searchParams.set("endDate", station.observationTimestamp ? "0" : selectedDate);
       sourceUrl.searchParams.set("returnFlags", "true");
       sourceUrl.searchParams.set("periodRef", station.observationTimestamp ? "END" : "START");
       if (!station.observationTimestamp) sourceUrl.searchParams.set("centralTendencyType", "MEDIAN");
       document.querySelector("#station-source").href = sourceUrl.toString();
+      updateDataQuality(station, sourceUrl.toString(), currentMode, selectedDate);
 
       syncStationSelectionButtons();
       await loadStationGraph(station);

@@ -1093,4 +1093,71 @@ selection cases, and do not commit.
 Stage 5 comparison behavior and requested browser checks passed. The transient
 NRCS failure recovered with Retry. Stage 6 remains unstarted; no commit was
 made.
+
+## Prompt 29 - Build Stage 6 Station Data-Quality Indicator
+
+**Prompt:**
+Implement only Stage 6 in index.html: add an expandable accessible data-quality
+panel inside station details with observation date/time/age, AWDB QC and QA
+flags and meanings, median availability, source and station identifier,
+effective status, and a plain-language acceptance/exclusion explanation.
+Reuse current 24-hour and historical exact-date rules, preserve formulas,
+periodRef=START, current hourly handling, and Station Comparison Mode. Test
+historical/current flags, missing observation/median, stale and invalid data,
+date and mode switching, and desktop/mobile. Update prompts.md, update Stage 6
+status in spec.md only after testing, and do not commit.
+
+**Agent Response / Changes:**
+- Added a native expandable Station Data Quality section in the selected
+  station details panel. It reports observation date, exact hourly timestamp
+  with AWDB UTC offset, current observation age, qcFlag, qaFlag, median
+  availability, station triplet, official AWDB request link, effective status,
+  and a plain-language explanation.
+- QA meanings are shown as R = Raw, P = Provisional, and A = Approved. QC
+  displays its returned value and explains that the app accepts only V.
+- Effective status uses the existing processed station status and values:
+  Valid, Missing, Invalid, Stale, or Median unavailable. The panel distinguishes
+  historical daily records without an exact time from missing exact-date data.
+- The panel uses existing status, timestamps, quality flags, age, median, and
+  percentage fields. No SWE formulas, period references, hourly retrieval, or
+  quality filters were changed. Comparison mode still hides and restores the
+  normal station view without losing the selected station's panel state.
+- Updated the Stage 6 status in spec.md after testing.
+
+**Test Results:**
+- Approved historical Brighton (April 1, 2025) showed Valid, exact date,
+  qcFlag V, qaFlag A, a 21.2-inch median, and the accepted-calculation
+  explanation. Its AWDB source URL retained `periodRef=START`.
+- Current Brighton Raw (`R`) and Louis Meadow Provisional (`P`) observations
+  showed their actual timestamps, AWDB UTC-08:00 offsets, age, median
+  availability, and exclusion explanations.
+- Clarkston Mountain's exact-date-missing record showed Missing with no
+  observation date/timestamp or flags claimed. Agua Canyon's invalid qcFlag E
+  showed Invalid. Atwater's historical record had SWE but no median and showed
+  Median unavailable. Agua Canyon on August 1, 2025 showed a zero median and
+  the percent-undefined explanation.
+- A controlled browser-clock check used Brighton's actual hourly AWDB reading
+  while advancing only the browser clock; at 48.7 hours old it showed Stale
+  and explained the 24-hour exclusion.
+- Date changes between historical/current modes, keyboard expansion, and
+  comparison-mode on/off passed. The panel was open/readable at desktop and
+  mobile widths; at 390px the page had no horizontal overflow and the quality
+  grid collapsed to one column.
+- An attempted route-fulfilled synthetic missing-median test timed out while
+  the intercepted request was pending. It was replaced by the live Atwater
+  historical case with an unavailable median, which exercised the panel's
+  missing-median state using official AWDB data.
+- Browser execution of the updated page succeeded and `git diff --check`
+  passed. No persistent automated test suite was added.
+
+**Files Changed:**
+- `index.html`: added the Stage 6 quality panel, flag explanations, effective
+  status text, and responsive styles.
+- `spec.md`: recorded Stage 6 implementation and test outcomes after testing.
+- `prompts.md`: appended this Prompt 29 entry and results.
+
+**Result:**
+Stage 6's requested data-quality states and integration checks passed. The
+route-based synthetic fixture was unnecessary after the live missing-median
+case passed. No commit was made.
 performed.

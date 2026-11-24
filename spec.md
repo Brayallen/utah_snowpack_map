@@ -272,3 +272,13 @@ Build and review one stage at a time. Do not begin a later stage until the prece
 
 **Completion criteria:**
 - The panel accurately describes the data used or the reason it is excluded, following the validated current/historical rules.
+
+**Status:** Implemented and browser-tested for user review; Stage 6 is not approved until the user reviews it.
+
+**Test results:**
+- Brighton's April 1, 2025 historical observation displayed Valid, exact-date matching, qcFlag V, qaFlag A, and the available 21.2-inch median.
+- Current observations displayed real Raw (Brighton) and Provisional (Louis Meadow) flags, timestamps with AWDB UTC offsets, observation age, and exclusion explanations.
+- Missing exact-date data (Clarkston Mountain), invalid QC (Agua Canyon), missing median (Atwater), and a zero median (Agua Canyon, August 1, 2025) displayed the corresponding effective status and explanation.
+- A controlled browser-clock check using Brighton's actual hourly AWDB timestamp made the reading 48.7 hours old; the panel showed Stale and the 24-hour exclusion reason.
+- Date switching, keyboard expansion, normal/comparison mode switching, and 390px/1440px layouts passed. The panel remained intact when returning from comparison mode.
+- The tests did not modify the validated calculations, historical START requests, or current hourly retrieval and quality rules.
