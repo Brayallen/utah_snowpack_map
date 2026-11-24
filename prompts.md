@@ -392,3 +392,65 @@ professional engineering judgment. Update prompts.md and do not build app code.
 **Result:**
 The approved Out of Scope section was applied. No app code or build artifacts
 were created.
+
+## Prompt 15 - Review Added Feature Requirements
+
+**Prompt:**
+Review Station Comparison Mode and Station Data-Quality Indicator for distinction
+from the required app functionality. Identify any extra inputs, calculations,
+outputs, and interface changes; recommend implementation in a single-file HTML
+app; ask only necessary design questions; do not edit spec.md or write app code.
+
+**Agent Response / Decisions:**
+- Confirmed that station comparison is distinct from the required one-at-a-time
+  station detail panel because it supports simultaneous selection of up to three
+  stations and aligned metric/graph comparison.
+- Confirmed that the data-quality indicator is distinct from basic unavailable
+  messages because it requires a dedicated diagnostic panel with timestamp, age,
+  flags, source, and exclusion reason.
+- Identified added inputs: comparison selection state, a maximum of three stations,
+  and optional station removal.
+- Identified added calculations: no new snowpack formulas; reuse exact-date SWE,
+  median, percent-of-median, and water-year series, with separate handling for
+  missing/invalid stations.
+- Identified added outputs: comparison table and up to three overlaid graph lines,
+  plus a data-quality panel with observation metadata and reason text.
+- Recommended using existing state variables, data cache, small modal or below-map
+  panel, shared chart component, and no separate data-store or build pipeline.
+- No spec.md or app code changes were made.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 15 entry.
+
+**Result:**
+Feature planning review completed. User decisions are needed before the Features
+section can be finalized.
+
+## Prompt 16 - Add Approved Features Section
+
+**Prompt:**
+Approve both additional features and implementation recommendations. Add a
+Features section to spec.md for Station Comparison Mode and Station Data-Quality
+Indicator, distinguish them from required functionality, document added inputs,
+outputs, and calculations, and require implementation only after required
+functionality passes validation. Update prompts.md and do not build app code.
+
+**Agent Response / Decisions:**
+- Added a Features section to spec.md after Out of Scope.
+- Added comparison-mode inputs and outputs: comparison toggle, up to three
+  selected triplets, comparison table, shared water-year SWE graph, removal
+  controls, and unavailable table rows with omitted graph series.
+- Documented reuse of existing SWE, median SWE, and percent-of-median calculations.
+- Added the expandable station data-quality panel and all approved diagnostic fields.
+- Clarified 24-hour stale handling in current mode and exact-date matching in
+  historical mode.
+- Clearly separated both features from required app functionality and made them
+  dependent on required-feature validation.
+
+**Files Changed:**
+- `spec.md`: added the Features section.
+- `prompts.md`: appended this Prompt 16 entry.
+
+**Result:**
+The approved Features section was added. No app code or build artifacts were
+created.

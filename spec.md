@@ -121,3 +121,28 @@ Independent comparison against downloadable NRCS Utah Snow Survey reports is sti
 Historical date selection and historical SWE visualization remain included in the app.
 
 The app is informational only and is not a replacement for official NRCS reports or professional engineering judgment.
+
+## Features
+
+The following features are additional capabilities and are distinct from the required app functionality. They must be implemented only after all required app functionality passes validation.
+
+### Feature 1: Station Comparison Mode
+
+- Users activate station comparison mode with a toggle.
+- Comparison mode allows selecting up to three Utah SNOTEL stations.
+- A compact comparison table displays each selected station's SWE, median SWE, percent of median, and data availability.
+- Use the existing SWE, median SWE, and percent-of-median calculations; no additional snowpack formula is needed.
+- Overlay the selected stations' water-year SWE measurements on a shared responsive graph.
+- Prevent selecting more than three stations and provide controls for removing selected stations.
+- Keep unavailable selected stations in the comparison table and omit their unavailable graph series.
+- Missing, invalid, stale, zero-median, and exact-date-unmatched measurements remain unavailable under the existing rules.
+- Comparison mode uses the currently selected date and AWDB triplet/observation data.
+
+### Feature 2: Station Data-Quality Indicator
+
+- Add an expandable data-quality section within the existing station details panel.
+- Show the observation date, observation timestamp, observation age, AWDB qcFlag, AWDB qaFlag, median availability, NRCS/AWDB source, station identifier/triplet, and effective data status.
+- Explain in plain text why a measurement is unavailable or excluded, including missing data, invalid quality flags, a stale observation, median SWE equal to zero, or failure to match the exact historical date.
+- In current mode, apply the existing 24-hour stale-data rule.
+- In historical mode, require exact selected-date matching and do not substitute or interpolate observations.
+- This feature uses existing AWDB metadata and data values and does not introduce a separate calculation or external data source.
