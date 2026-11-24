@@ -556,3 +556,39 @@ later stages have not been built.
 - Confirmed the date input defaults to the current America/Denver date and sets
   the same date as its maximum.
 - Stage 1 remains pending user visual review and approval.
+
+## Prompt 20 - Build Stage 2 Interactive Map
+
+**Prompt:**
+Read the spec and build only Stage 2 in index.html. Replace the map placeholder
+with a browser mapping library, center on Utah, enable zoom/pan, add clearly
+labeled sample SNOTEL markers with the five-level color scale and gray
+unavailable state, legend, marker selection/details, desktop hover and mobile
+tap behavior, and keyboard-accessible station selection. Keep the responsive
+layout and single-file app, using CDN library resources as needed. Do not call
+NRCS, implement real calculations or historical graphs, build Stages 3-6, or
+commit. Update this log and test desktop/mobile behavior.
+
+**Agent Response / Decisions:**
+- Replaced the illustrative map with Leaflet 1.9.4 and OpenStreetMap tiles;
+  no NRCS endpoint or data request was added.
+- Added six clearly labeled synthetic mock stations across Utah, including five
+  percent-of-median color bands and one gray unavailable marker.
+- Added marker hover tooltips, click/tap popups, a keyboard-operable alternative
+  station list, and sample details that update when a station is selected.
+- Preserved the responsive page, visible legend, sample statewide summary, and
+  graph placeholder; no real SWE calculations or custom features were added.
+- Browser-tested desktop at 1440px and mobile at 390px: all six markers render,
+  marker selection and hover tooltips work, zoom controls change map tiles,
+  map dragging pans, keyboard Enter selects a station, mobile tap selection
+  updates details, and there is no horizontal overflow.
+- Confirmed no AWDB/NRCS endpoint or `fetch()` call is present in index.html.
+
+**Files Changed:**
+- `index.html`: replaced the static map placeholder with an interactive
+  Leaflet map using sample-only data.
+- `prompts.md`: appended this Prompt 20 entry.
+
+**Result:**
+Stage 2 interactive map and browser checks completed. Stages 3-6 were not built.
+No commit was created; Stage 2 awaits user review and approval.
