@@ -1,15 +1,20 @@
 # Utah Snowpack Map
 
+## App Overview
+The Utah Snowpack Map is an informational app for viewing Utah's active SNOTEL stations against the NRCS 1991-2020 median. It presents an unweighted statewide average and valid-station coverage, an interactive color-coded map, station measurements and water-year SWE graphs, and clear data-quality or unavailable states. After required functionality passes validation, the app adds station comparison and a station data-quality panel. Forecasts, alerts, reservoir calculations, and data exports are out of scope.
+
 ## Purpose
 Create an interactive map showing how Utah snowpack compares with the 1991-2020 median. The app provides both a statewide summary and station-level comparisons for engineers, water managers, and Utah residents.
 
-In current mode, "current" means the latest valid NRCS observation available for the station. In historical mode, the app displays observations for the selected date. The app is informational and does not provide forecasts, reservoir calculations, or flood warnings.
+Selecting today's date in America/Denver uses current mode: use the latest valid NRCS observation available for each station, and treat it as stale if its observation timestamp is more than 24 hours old. Selecting an earlier date uses historical mode: use only an observation from that exact selected date. Do not substitute or interpolate observations. The app is informational and does not provide forecasts, reservoir calculations, or flood warnings.
 
 ## Inputs
 - Date picker defaults to the current date in Utah local time (America/Denver).
 - Allowed historical date range is October 1, 1991 through today. Future dates are rejected, and station-specific dates outside the station's valid record or 1991-2020 median coverage are unavailable.
 - The map uses live active Utah SNOTEL stations that contain snow water equivalent (WTEQ) data.
 - Users select a station by clicking its marker on the map.
+- The eligible-station denominator includes every active Utah SNOTEL station with SWE monitoring capability, even when its observation or median SWE is unavailable for the selected date.
+- The valid-station numerator includes only stations with an acceptable observation for the selected mode and date, valid AWDB quality flags, a current-mode observation age of no more than 24 hours when applicable, and a nonzero median SWE.
 - Missing, stale, or quality-failed observations are not interpolated or treated as measurements.
 
 ## Calculations
@@ -22,7 +27,7 @@ In current mode, "current" means the latest valid NRCS observation available for
 - Exclude stations with median SWE equal to zero because percent of median is undefined.
 - Statewide average = arithmetic mean of valid station percentages, with no station weighting.
 - Label this result "Average of valid station percentages (unweighted)".
-- Display the valid station count and total eligible station count as coverage.
+- Display the valid station count divided by the total eligible station count as coverage. The denominator includes all active Utah SNOTEL stations with SWE monitoring capability; the numerator includes only stations passing the approved observation, quality, date, and nonzero-median rules.
 
 ## Outputs
 - A Utah map of live active Utah SNOTEL stations that contain WTEQ data.
@@ -146,3 +151,82 @@ The following features are additional capabilities and are distinct from the req
 - In current mode, apply the existing 24-hour stale-data rule.
 - In historical mode, require exact selected-date matching and do not substitute or interpolate observations.
 - This feature uses existing AWDB metadata and data values and does not introduce a separate calculation or external data source.
+
+## Build stages
+
+Build and review one stage at a time. Do not begin a later stage until the preceding stage is complete and approved. Station Comparison Mode and the Station Data-Quality Indicator must not be built until all required functionality has passed Stage 4 validation.
+
+### Stage 1: Initial page mockup
+
+**What will be built:**
+- A single-page layout with the statewide summary and date picker at the top, a Utah map area on the left, and a station detail and graph area on the right.
+- Responsive desktop and mobile layouts using placeholder content only.
+
+**What to test or check:**
+- Check layout hierarchy, readability, responsive stacking, legend placement, and visible keyboard focus.
+- Confirm no live NRCS data or calculations are presented as real in the mockup.
+
+**Completion criteria:**
+- The approved page structure is clear and readable at desktop and mobile widths, and all displayed data is visibly identified as placeholder content.
+
+### Stage 2: Interactive Utah SNOTEL map
+
+**What will be built:**
+- A Utah map populated with mock station data, including zoom and pan, marker colors and legend, tooltips/tap interactions, and station selection by pointer or keyboard.
+
+**What to test or check:**
+- Check marker selection, marker overlap and zooming, accessible station selection, marker color bins, and solid-gray unavailable markers with text status.
+
+**Completion criteria:**
+- Users can inspect and select mock stations at desktop and mobile sizes, and the map interactions and legend follow the approved specification.
+
+### Stage 3: NRCS API, calculations, station details, and graphs
+
+**What will be built:**
+- NRCS AWDB station metadata and observation integration.
+- Current/historical mode behavior, SWE and median calculations, statewide summary and coverage, station details, and selected water-year SWE and 1991-2020 median graphs.
+- Loading, unavailable, API failure, last-known-data, and retry states.
+
+**What to test or check:**
+- Check today's America/Denver date uses current mode and the 24-hour stale threshold; earlier dates use exact-date historical mode.
+- Check AWDB quality flags, missing values, zero medians, units, rounding, map classification, statewide numerator and denominator, graph labels, and missing-data gaps.
+
+**Completion criteria:**
+- Live AWDB-backed values appear with correct station/date context; invalid or unavailable data is excluded and communicated under the specified rules; station detail and graph values agree.
+
+### Stage 4: Required-functionality validation
+
+**What will be built:**
+- Focused validation tests and recorded results for the required app functionality. No additional product feature is added in this stage.
+
+**What to test or check:**
+- Check the Brighton hand calculation and all three April 1, 2025 AWDB station references within the stated SWE and percentage criteria.
+- Exercise missing observations, invalid quality flags, zero median SWE, stale current observations, and historical exact-date matching.
+- Compare station values only; do not compare the app's unweighted statewide average to an NRCS basin-weighted statistic.
+
+**Completion criteria:**
+- Required validation cases pass and results are documented before optional features begin.
+- Independent comparisons against downloadable NRCS Utah Snow Survey reports remain explicitly pending until those reports are obtained and compared; do not claim those comparisons passed before then.
+
+### Stage 5: Station Comparison Mode
+
+**What will be built:**
+- The comparison toggle, selection/removal controls for up to three stations, comparison table, and shared water-year SWE graph.
+
+**What to test or check:**
+- Check the three-station limit, removal, metric consistency with the required station details, and unavailable stations remaining in the table while their graph series are omitted.
+
+**Completion criteria:**
+- One to three stations can be compared using the existing validated calculations, without changing required map or station behavior.
+
+### Stage 6: Station Data-Quality Indicator
+
+**What will be built:**
+- The expandable data-quality section in station details, including observation date, timestamp, age, AWDB flags, median availability, source, station identifier, effective status, and explanation.
+
+**What to test or check:**
+- Check displayed diagnostic values and explanations for valid, missing, invalid-quality, stale, zero-median, and historical exact-date-unmatched cases.
+- Confirm the 24-hour rule applies only to current mode.
+
+**Completion criteria:**
+- The panel accurately describes the data used or the reason it is excluded, following the validated current/historical rules.

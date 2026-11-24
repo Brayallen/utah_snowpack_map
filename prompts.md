@@ -454,3 +454,65 @@ functionality passes validation. Update prompts.md and do not build app code.
 **Result:**
 The approved Features section was added. No app code or build artifacts were
 created.
+
+## Prompt 17 - Review Specification and Propose Build Stages
+
+**Prompt:**
+Read spec.md carefully, including its seven required sections and two additional
+features. Do not write application code. Write a short overview and recommend
+4-6 build stages beginning with a page mockup. Each stage must describe what
+will be built, what to test, and its completion criteria. Include the interactive
+Utah SNOTEL map, NRCS API/SWE calculations, station information/historical SWE
+graphs, hand-calculation and NRCS validation, and each additional feature
+separately after validation. Do not edit spec.md or index.html; present the plan
+for review before implementation.
+
+**Agent Response / Decisions:**
+- Read the full specification and AGENTS.md.
+- Prepared a six-stage sequence: initial page mockup; interactive Utah map using
+  mock data; NRCS API integration, SWE calculations, station information, and
+  historical graphs; required-functionality validation; Station Comparison
+  Mode; and Station Data-Quality Indicator.
+- Kept the two optional features in separate post-validation stages.
+- Identified that the current-versus-historical mode boundary and statewide
+  eligible-station denominator need to be made explicit before implementation.
+- No application files were changed; only this prompt log entry was appended.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 17 entry.
+
+**Result:**
+Planning response prepared for user review. No application code was written,
+and spec.md and index.html were not modified.
+
+## Prompt 18 - Add Overview, Clarifications, and Build Stages
+
+**Prompt:**
+Approve the six-stage plan and clarify that today in America/Denver is current
+mode with the 24-hour stale rule, earlier dates require exact-date observations,
+the eligible denominator is every active Utah SNOTEL station with SWE capability,
+and the valid numerator includes only stations passing quality, date, and
+nonzero-median rules. Add the overview at the beginning, the six stages at the
+end with build/test/completion criteria, and record clarifications in the
+appropriate sections. Do not build app code. Continue prompt logging and confirm
+readiness for Stage 1.
+
+**Agent Response / Decisions:**
+- Added an App Overview at the beginning of spec.md.
+- Clarified current versus historical mode in Purpose and Inputs.
+- Clarified eligible denominator and valid numerator in Inputs and Calculations.
+- Added the six approved Build stages, each with what will be built, what to test,
+  and completion criteria.
+- Gated the two optional features until required functionality passes Stage 4.
+- Preserved the pending status of independent NRCS Utah Snow Survey report
+  comparisons.
+- Did not create or modify index.html or any application code.
+
+**Files Changed:**
+- `spec.md`: added the App Overview, clarified current/historical and station
+  count rules, and appended Build stages.
+- `prompts.md`: appended this Prompt 18 entry.
+
+**Result:**
+The specification is ready for Stage 1 planning. No app implementation was
+started.
