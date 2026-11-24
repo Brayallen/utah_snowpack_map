@@ -216,3 +216,71 @@ Do not build app code.
 **Result:**
 All approved Outputs decisions were applied. No app code or build artifacts
 were created.
+
+## Prompt 9 - Prepare Final Validation Section
+
+**Prompt:**
+Finalize the planned Validation section for three stations: Brighton (366),
+Snowbird (766), and Ben Lomond Peak (332), using April 1, 2025. Find actual NRCS
+SWE and 1991-2020 median values, identify official report and API sources,
+explain a hand calculation, recommend tolerances and edge-case tests, explain
+station-to-report comparison, and do not invent measurements or claim app tests
+have passed before implementation. Update prompts.md only.
+
+**Agent Response / Decisions:**
+- Verified official AWDB WTEQ observations and medians for April 1, 2025:
+  Brighton 21.4/21.6 inches, Snowbird 38.6/36.5 inches, and Ben Lomond Peak
+  33.4/33.4 inches.
+- Calculated hand percentages as Brighton 99.1%, Snowbird 105.8%, and Ben Lomond
+  Peak 100.0%, or 99%, 106%, and 100% to whole-percent display.
+- Confirmed source station triplets and valid quality flags for all three
+  observations: `qcFlag=V` and `qaFlag=A`.
+- Identified the official AWDB metadata and data endpoints plus the NRCS
+  Report Generator interface as sources.
+- Recommended SWE pass/fail within 0.1 inch and percentage pass/fail within
+  nearest whole percent.
+- Recommended edge tests for missing values, invalid quality flags, stale
+  observations, and median SWE equal to zero.
+- Explained that validation should compare station values only and must not
+  compare the app's unweighted station average with an NRCS basin-weighted
+  statewide statistic.
+- Recorded that no app validation test can pass until the app exists.
+
+**Files Changed:**
+- `prompts.md`: appended this Prompt 9 entry.
+
+**Result:**
+Validation measurements and sources were prepared for specification review.
+No `spec.md` changes or app implementation were performed.
+
+## Prompt 10 - Update Validation Section
+
+**Prompt:**
+Approve the three April 1, 2025 AWDB station measurements and Brighton as the
+hand-calculation example. Require exact selected-date observations with no
+fallback or interpolation. Update Validation in spec.md with station values and
+percentages, the Brighton calculation, exact AWDB sources/query parameters,
+acceptance criteria, and edge-case tests. Clearly state that independent NRCS
+Snow Survey report comparisons remain pending and that the app has not passed
+validation. Update prompts.md only; do not build app code.
+
+**Agent Response / Decisions:**
+- Updated only the Validation section of spec.md.
+- Recorded Brighton, Snowbird, and Ben Lomond Peak April 1, 2025 AWDB values
+  and nearest-whole-percent results.
+- Added Brighton's hand calculation at full precision and display rounding.
+- Added the AWDB data, metadata, and API documentation sources plus all validation
+  query parameters.
+- Added SWE and percentage acceptance tolerances.
+- Added exact-date, missing, invalid-quality, zero-median, and stale-observation
+  requirements.
+- Explicitly stated that independent NRCS report comparison remains pending and
+  that the app has not passed validation.
+
+**Files Changed:**
+- `spec.md`: updated only the Validation section.
+- `prompts.md`: appended this Prompt 10 entry.
+
+**Result:**
+The approved Validation section was added. No app code or build artifacts were
+created.

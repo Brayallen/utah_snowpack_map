@@ -52,14 +52,46 @@ In current mode, "current" means the latest valid NRCS observation available for
 - Layout should work on desktop and mobile.
 
 ## Validation
-Compare SWE and percent of median for three stations against NRCS Utah Snow Survey reports.
+Initial station-level reference values are obtained from the NRCS AWDB for April 1, 2025:
 
-Hand calculation example:
-- SWE = 12 inches
-- Median SWE = 15 inches
-- Percent of median = (12 / 15) × 100 = 80%
+| Station | Triplet | SWE | 1991-2020 median SWE | Percent of median |
+|---|---|---:|---:|---:|
+| Brighton | 366:UT:SNTL | 21.4 inches | 21.6 inches | 99% |
+| Snowbird | 766:UT:SNTL | 38.6 inches | 36.5 inches | 106% |
+| Ben Lomond Peak | 332:UT:SNTL | 33.4 inches | 33.4 inches | 100% |
 
-These are example values and will be replaced with actual NRCS data.
+Brighton hand calculation:
+- SWE = 21.4 inches
+- Median SWE = 21.6 inches
+- Percent of median = (21.4 / 21.6) x 100 = 99.074%, displayed as 99%
+
+The official AWDB source is:
+- Base data endpoint: `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data`
+- API documentation: `https://wcc.sc.egov.usda.gov/awdbRestApi/v3/api-docs`
+- Station metadata endpoint: `https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations`
+
+The validation query uses station triplets `366:UT:SNTL,766:UT:SNTL,332:UT:SNTL`, element `WTEQ`, duration `DAILY`, begin and end date `2025-04-01`, `centralTendencyType=MEDIAN`, `returnFlags=true`, and `periodRef=END`.
+
+Calculate with unrounded values and round only SWE and percentage output as specified by the Calculations and Outputs sections.
+
+Acceptance criteria:
+- SWE matches the AWDB reference within 0.1 inch.
+- Percent of median matches the displayed nearest whole-percent result.
+- Brighton, Snowbird, and Ben Lomond Peak must each pass independently.
+- The app's unweighted station average must not be compared directly with an NRCS basin-weighted statewide statistic.
+
+Historical-date validation:
+- An observation must correspond to the exact selected date.
+- Do not substitute an earlier observation, later observation, or interpolated value.
+- For a missing exact-date observation, display the station as unavailable and exclude it from the statewide average.
+
+Edge-case tests:
+- Missing observation: show unavailable and exclude it from marker classification and the statewide average.
+- Invalid quality flags: require `qcFlag=V` and `qaFlag=A`; otherwise show unavailable and exclude it.
+- Zero median SWE: show unavailable and exclude it because percent of median is undefined.
+- Stale observation: show unavailable and exclude it; a stale test fixture must fail the applicable observation-age or station-report-time rule rather than be converted to valid SWE.
+
+Independent comparison against downloadable NRCS Utah Snow Survey reports is still pending. The app is not yet implemented, and validation has not passed.
 
 ## Out of Scope
 - Predicting future snowfall.
